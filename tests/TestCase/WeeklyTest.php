@@ -1,6 +1,9 @@
 <?php
 namespace ABWeb\IncomeTax\Tests\TestCase;
 
+use ABWeb\IncomeTax\IncomeTax;
+use ABWeb\IncomeTax\Source\TaxTables2015;
+
 class WeeklyTest extends \PHPUnit_Framework_TestCase
 {
     // Values taken from https://www.ato.gov.au/uploadedFiles/Content/MEI/downloads/Schedule-1-Calculating-amounts-to-be-withheld-2015-16.pdf
@@ -103,8 +106,16 @@ class WeeklyTest extends \PHPUnit_Framework_TestCase
         ]
     ];
 
+    public function setUp()
+    {
+        $this->IncomeTax = new IncomeTax(TaxTables2015::source());
+    }
+
     public function testScaleOne()
     {
-
+        foreach ($this->data[1] as $earnings => $expectedTax) {
+            $tax = $this->IncomeTax->calculateTax($earnings, 1);
+            $this->assertEquals($expectedTax, $tax, 'Scale 1 - Weekly Earnings: ' . $earnings);
+        }
     }
 }
