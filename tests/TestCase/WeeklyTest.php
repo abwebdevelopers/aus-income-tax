@@ -118,4 +118,12 @@ class WeeklyTest extends \PHPUnit_Framework_TestCase
             $this->assertEquals($expectedTax, $tax, 'Scale 1 - Weekly Earnings: ' . $earnings);
         }
     }
+
+    public function testScaleTwo()
+    {
+        foreach ($this->data[2] as $earnings => $expectedTax) {
+            $tax = $this->IncomeTax->calculateTax($earnings, 2);
+            $this->assertEquals($expectedTax, $tax, 'Scale 2 - Weekly Earnings: ' . $earnings);
+        }
+    }
 }
