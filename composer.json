@@ -1,0 +1,30 @@
+{
+    "name": "abweb/income-tax",
+    "description": "Australian Income Tax calculator, based on the rules of the 2015 ATO tax tables",
+    "version": "1.0.0-dev",
+    "type": "library",
+    "require": {
+        "php": ">=5.6.0"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^5.0"
+    },
+    "license": "proprietary",
+    "authors": [
+        {
+            "name": "Ben Thomson",
+            "email": "ben@abweb.com.au",
+            "role": "Developer"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "ABWeb\\IncomeTax\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "ABWeb\\IncomeTax\\Tests": "tests/"
+        }
+    }
+}
