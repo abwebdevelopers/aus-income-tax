@@ -147,6 +147,7 @@ class IncomeTax
                 if (isset($values[1])) {
                     $subtraction = $values[1];
                 }
+                break;
             }
         }
 
@@ -162,7 +163,7 @@ class IncomeTax
         if ($percentage === 0) {
             return 0;
         }
-        $tax = ($beforeTax * $percentage) - $subtraction;
+        $tax = ($earnings * $percentage) - $subtraction;
         return round($tax, 0, PHP_ROUND_HALF_UP);
     }
 }
