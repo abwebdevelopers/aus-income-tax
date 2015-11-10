@@ -4,10 +4,8 @@ before_script:
 stages:
     - test
 
-lint:
-    script: "./vendor/bin/parallel-lint --exclude vendor --blame ."
-    stage: test
-
-phpunit:
-    script: "./vendor/bin/phpunit --coverage-text --colors=never --whitelist='./src'"
+testing:
+    script:
+        - "./vendor/bin/parallel-lint --exclude vendor --blame ."
+        - "./vendor/bin/phpunit --coverage-text --colors=never --whitelist='./src'"
     stage: test
