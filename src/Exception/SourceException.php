@@ -1,7 +1,9 @@
 <?php
+namespace ABWeb\IncomeTax\Exception;
+
 class SourceException extends \Exception
 {
-    public function __construct($message = null, $code = 60511, \Exception $previous = null)
+    public function __construct($message = null, $code = 31200, \Exception $previous = null)
     {
         parent::__construct($message, $code, $previous);
     }

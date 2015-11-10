@@ -1,7 +1,9 @@
 <?php
+namespace ABWeb\IncomeTax\Exception;
+
 class CalculationException extends \Exception
 {
-    public function __construct($message = null, $code = 60512, \Exception $previous = null)
+    public function __construct($message = null, $code = 31300, \Exception $previous = null)
     {
         parent::__construct($message, $code, $previous);
     }
