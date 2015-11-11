@@ -2,7 +2,7 @@
 namespace ABWeb\IncomeTax\Tests\TestCase;
 
 use ABWeb\IncomeTax\IncomeTax;
-use ABWeb\IncomeTax\Source\TaxTables2015;
+use ABWeb\IncomeTax\Source\Years\TaxTables2015;
 
 class SourceTest extends \PHPUnit_Framework_TestCase
 {
@@ -13,7 +13,7 @@ class SourceTest extends \PHPUnit_Framework_TestCase
 
     public function testValidSource()
     {
-        $loaded = $this->IncomeTax->loadSource(TaxTables2015::source());
+        $loaded = $this->IncomeTax->loadSource(new TaxTables2015);
         $this->assertTrue($loaded, 'Unable to load Tax Tables 2015 source');
     }
 

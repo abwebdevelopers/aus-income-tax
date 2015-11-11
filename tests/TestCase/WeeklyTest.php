@@ -2,7 +2,7 @@
 namespace ABWeb\IncomeTax\Tests\TestCase;
 
 use ABWeb\IncomeTax\IncomeTax;
-use ABWeb\IncomeTax\Source\TaxTables2015;
+use ABWeb\IncomeTax\Source\Years\TaxTables2015;
 
 class WeeklyTest extends \PHPUnit_Framework_TestCase
 {
@@ -103,18 +103,69 @@ class WeeklyTest extends \PHPUnit_Framework_TestCase
             3111 => 982,
             3460 => 1119,
             3461 => 1119
+        ],
+        '3' => [ // Scale 3 - Foreign residents
+            44 => 14,
+            45 => 15,
+            116 => 38,
+            117 => 38,
+            249 => 81,
+            250 => 81,
+            354 => 115,
+            355 => 115,
+            360 => 117,
+            361 => 117,
+            394 => 128,
+            395 => 128,
+            492 => 160,
+            493 => 160,
+            659 => 214,
+            660 => 214,
+            710 => 231,
+            711 => 231,
+            825 => 268,
+            826 => 268,
+            931 => 303,
+            932 => 303,
+            1187 => 386,
+            1188 => 386,
+            1281 => 416,
+            1282 => 417,
+            1537 => 500,
+            1538 => 500,
+            1844 => 613,
+            1845 => 614,
+            2119 => 715,
+            2120 => 716,
+            2490 => 852,
+            2491 => 853,
+            2652 => 912,
+            2653 => 913,
+            2736 => 943,
+            2737 => 944,
+            2898 => 1003,
+            2899 => 1004,
+            2913 => 1009,
+            2914 => 1009,
+            3110 => 1082,
+            3111 => 1082,
+            3460 => 1211,
+            3461 => 1212
+        ],
+        '5' => [ // Scale 5 - Medicare Levy
+
         ]
     ];
 
     public function setUp()
     {
-        $this->IncomeTax = new IncomeTax(TaxTables2015::source());
+        $this->IncomeTax = new IncomeTax(new TaxTables2015);
     }
 
     public function testScaleOne()
     {
         foreach ($this->data[1] as $earnings => $expectedTax) {
-            $tax = $this->IncomeTax->calculateTax($earnings, 1);
+            $tax = $this->IncomeTax->calculateTax($earnings, 1, 'weekly', '2015-06-02');
             $this->assertEquals($expectedTax, $tax, 'Scale 1 - Weekly Earnings: ' . $earnings);
         }
     }
@@ -122,8 +173,16 @@ class WeeklyTest extends \PHPUnit_Framework_TestCase
     public function testScaleTwo()
     {
         foreach ($this->data[2] as $earnings => $expectedTax) {
-            $tax = $this->IncomeTax->calculateTax($earnings, 2);
+            $tax = $this->IncomeTax->calculateTax($earnings, 2, 'weekly', '2015-06-02');
             $this->assertEquals($expectedTax, $tax, 'Scale 2 - Weekly Earnings: ' . $earnings);
+        }
+    }
+
+    public function testScaleThree()
+    {
+        foreach ($this->data[3] as $earnings => $expectedTax) {
+            $tax = $this->IncomeTax->calculateTax($earnings, 3, 'weekly', '2015-06-02');
+            $this->assertEquals($expectedTax, $tax, 'Scale 3 - Weekly Earnings: ' . $earnings);
         }
     }
 }
