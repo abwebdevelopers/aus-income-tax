@@ -6,7 +6,7 @@ use ABWeb\IncomeTax\Exception\CalculationException;
 
 class IncomeTax
 {
-    protected $coefficients = null;
+    protected $source = null;
     protected $validFrequencies = ['weekly', 'fortnightly', 'monthly', 'quarterly'];
 
     public function __construct($source = null)
@@ -16,25 +16,25 @@ class IncomeTax
         }
     }
 
-    public function loadSource($source = [])
+    public function loadSource(\ABWeb\IncomeTax\Source\TaxTableSource $source)
     {
         if ($this->checkSource($source) === false) {
             return false;
         }
 
-        $this->coefficients = $source;
+        $this->source = $source;
         return true;
     }
 
-    protected function checkSource($source)
+    protected function checkSource(\ABWeb\IncomeTax\Source\TaxTableSource $source)
     {
-        if (is_array($source) === false) {
+        if (is_array($source->coefficients()) === false) {
             throw new SourceException('The coefficients source must be an array.', 31201);
             return false;
         }
 
         // Determine format of array
-        foreach ($source as $scale => $brackets) {
+        foreach ($source->coefficients() as $scale => $brackets) {
             if (!is_int($scale)) {
                 throw new SourceException('The first array layer keys must represent the tax scale in the form of an integer. [Scale: ' . $scale . ']', 31202);
                 return false;
@@ -72,7 +72,7 @@ class IncomeTax
 
     public function calculateTax($beforeTax = 0, $scale = 1, $frequency = 'weekly', $date = null)
     {
-        if (!isset($this->coefficients)) {
+        if (!isset($this->source)) {
             throw new SourceException('No source specified.');
             return false;
         }
@@ -110,7 +110,7 @@ class IncomeTax
             throw new CalculationException('Invalid payment frequency specified - must be "weekly", "fortnightly", "monthly" or "quarterly"', 31303);
             return false;
         }
-        if (!isset($this->coefficients[$scale])) {
+        if ($this->source->coefficients($scale) === false) {
             throw new SourceException('Scale ' . $scale . ' does not exist in the source.', 31208);
             return false;
         }
@@ -123,12 +123,12 @@ class IncomeTax
         switch ($frequency) {
             case 'weekly':
             default:
-                return $this->calculateWeeklyTax($beforeTax, $scale);
+                return $this->calculateWeeklyTax($beforeTax, $scale, $date);
                 break;
         }
     }
 
-    protected function calculateWeeklyTax($beforeTax, $scale)
+    protected function calculateWeeklyTax($beforeTax, $scale, $date = null)
     {
         // Round to nearest dollar and add 99 cents
         $earnings = round($beforeTax, 0, PHP_ROUND_HALF_UP) + 0.99;
@@ -136,7 +136,7 @@ class IncomeTax
         $subtraction = 0;
 
         // Find correct coefficients
-        foreach ($this->coefficients[$scale] as $bracket => $values) {
+        foreach ($this->source->coefficients($scale) as $bracket => $values) {
             if ($bracket === 0) {
                 $default = $values;
                 continue;
@@ -164,6 +164,9 @@ class IncomeTax
             return 0;
         }
         $tax = ($earnings * $percentage) - $subtraction;
+
+        // If it's a leap year, add additional
+
         return round($tax, 0, PHP_ROUND_HALF_UP);
     }
 }
