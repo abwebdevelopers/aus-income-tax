@@ -18,15 +18,11 @@ class IncomeTax
 
     public function loadSource(\ABWeb\IncomeTax\Source\TaxTableSource $source)
     {
-        if ($this->checkSource($source) === false) {
-            return false;
-        }
-
         $this->source = $source;
         return true;
     }
 
-    public function calculateTax($beforeTax = 0, $scale = 1, $frequency = 'weekly', $date = null)
+    public function calculateTax($beforeTax = 0, $frequency = 'weekly', $date = null, $type = null, $scale = null)
     {
         if (!isset($this->source)) {
             throw new SourceException('No source specified.');
