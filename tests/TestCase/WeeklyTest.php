@@ -156,8 +156,110 @@ class WeeklyTest extends \PHPUnit_Framework_TestCase
             3460 => 1211,
             3461 => 1212
         ],
-        '5' => [ // Scale 5 - Medicare Levy
-
+        '4' => [ // Scale 4 - No TFN provided
+            44 => 21,
+            249 => 122,
+            492 => 241,
+            825 => 404,
+            1538 => 753,
+            2652 => 1299,
+            3460 => 1695
+        ],
+        '5' => [ // Scale 5 - Full Medicare Levy
+            44 => 0,
+            45 => 0,
+            116 => 0,
+            117 => 0,
+            249 => 0,
+            250 => 0,
+            354 => 0,
+            355 => 0,
+            360 => 1,
+            361 => 1,
+            394 => 8,
+            395 => 8,
+            492 => 26,
+            493 => 26,
+            659 => 58,
+            660 => 58,
+            710 => 68,
+            711 => 68,
+            825 => 105,
+            826 => 106,
+            931 => 140,
+            932 => 140,
+            1187 => 224,
+            1188 => 224,
+            1281 => 255,
+            1282 => 255,
+            1537 => 338,
+            1538 => 338,
+            1844 => 451,
+            1845 => 452,
+            2119 => 553,
+            2120 => 554,
+            2490 => 690,
+            2491 => 691,
+            2652 => 750,
+            2653 => 751,
+            2736 => 781,
+            2737 => 782,
+            2898 => 841,
+            2899 => 842,
+            2913 => 847,
+            2914 => 847,
+            3110 => 920,
+            3111 => 920,
+            3460 => 1049,
+            3461 => 1050
+        ],
+        '6' => [ // Scale 6 - Full Medicare Levy
+            44 => 0,
+            45 => 0,
+            116 => 0,
+            117 => 0,
+            249 => 0,
+            250 => 0,
+            354 => 0,
+            355 => 0,
+            360 => 1,
+            361 => 1,
+            394 => 8,
+            395 => 8,
+            492 => 26,
+            493 => 26,
+            659 => 58,
+            660 => 58,
+            710 => 70,
+            711 => 70,
+            825 => 113,
+            826 => 114,
+            931 => 149,
+            932 => 150,
+            1187 => 236,
+            1188 => 236,
+            1281 => 267,
+            1282 => 268,
+            1537 => 353,
+            1538 => 354,
+            1844 => 470,
+            1845 => 470,
+            2119 => 574,
+            2120 => 575,
+            2490 => 715,
+            2491 => 716,
+            2652 => 777,
+            2653 => 777,
+            2736 => 809,
+            2737 => 809,
+            2898 => 870,
+            2899 => 871,
+            2913 => 876,
+            2914 => 876,
+            3110 => 951,
+            3111 => 951,
+            3460 => 1084,
+            3461 => 1084
         ]
     ];
 
@@ -191,6 +293,30 @@ class WeeklyTest extends \PHPUnit_Framework_TestCase
         foreach ($this->data[3] as $earnings => $expectedTax) {
             $tax = $this->IncomeTax->calculateTax($earnings, 'weekly', '2015-06-02', 'standard', 3);
             $this->assertEquals($expectedTax, $tax, 'Scale 3 - Weekly Earnings: ' . $earnings);
+        }
+    }
+
+    public function testScaleFour()
+    {
+        foreach ($this->data[4] as $earnings => $expectedTax) {
+            $tax = $this->IncomeTax->calculateTax($earnings, 'weekly', '2015-06-02', 'standard', '4 resident');
+            $this->assertEquals($expectedTax, $tax, 'Scale 4 - Weekly Earnings: ' . $earnings);
+        }
+    }
+
+    public function testScaleFive()
+    {
+        foreach ($this->data[5] as $earnings => $expectedTax) {
+            $tax = $this->IncomeTax->calculateTax($earnings, 'weekly', '2015-06-02', 'standard', 5);
+            $this->assertEquals($expectedTax, $tax, 'Scale 5 - Weekly Earnings: ' . $earnings);
+        }
+    }
+
+    public function testScaleSix()
+    {
+        foreach ($this->data[6] as $earnings => $expectedTax) {
+            $tax = $this->IncomeTax->calculateTax($earnings, 'weekly', '2015-06-02', 'standard', 6);
+            $this->assertEquals($expectedTax, $tax, 'Scale 6 - Weekly Earnings: ' . $earnings);
         }
     }
 }
