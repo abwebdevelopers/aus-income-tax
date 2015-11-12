@@ -66,10 +66,6 @@ class IncomeTax
             throw new CalculationException('Invalid payment frequency specified - must be "weekly", "fortnightly", "monthly" or "quarterly"', 31303);
             return false;
         }
-        if ($this->source->coefficients($scale) === false) {
-            throw new SourceException('Scale ' . $scale . ' does not exist in the source.', 31208);
-            return false;
-        }
         if ($date === false) {
             throw new CalculationException('Invalid payment date specified.', 312304);
             return false;
@@ -86,8 +82,13 @@ class IncomeTax
 
     protected function calculateWeeklyTax($beforeTax, $date, $type, $scale)
     {
-        // Round to nearest dollar and add 99 cents
-        $earnings = round($beforeTax, 0, PHP_ROUND_HALF_UP) + 0.99;
+        if ($scale === '4 resident' || $scale === '4 non resident') {
+            // Scale 4 earnings have all cents ignored
+            $earnings = floor($beforeTax);
+        } else {
+            // Round to nearest dollar and add 99 cents
+            $earnings = round($beforeTax, 0, PHP_ROUND_HALF_UP) + 0.99;
+        }
 
         // Retrieve coefficients
         $coefficients = $this->source->coefficients($beforeTax, $type, $scale);
@@ -97,10 +98,16 @@ class IncomeTax
         if ($percentage === 0) {
             return 0;
         }
+
         $tax = ($earnings * $percentage) - $subtraction;
 
         // If it's a leap year, add additional
 
-        return round($tax, 0, PHP_ROUND_HALF_UP);
+        if ($scale === '4 resident' || $scale === '4 non resident') {
+            // When scale 4 is used, any cents in the tax must be ignored
+            return floor($tax);
+        } else {
+            return round($tax, 0, PHP_ROUND_HALF_UP);
+        }
     }
 }
