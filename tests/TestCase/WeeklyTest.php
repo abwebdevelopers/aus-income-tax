@@ -2,7 +2,11 @@
 namespace ABWeb\IncomeTax\Tests\TestCase;
 
 use ABWeb\IncomeTax\IncomeTax;
-use ABWeb\IncomeTax\Source\Years\TaxTables2015;
+use ABWeb\IncomeTax\Source\ATOExcelSource;
+
+if (!defined('DS')) {
+    define('DS', DIRECTORY_SEPARATOR);
+}
 
 class WeeklyTest extends \PHPUnit_Framework_TestCase
 {
@@ -159,13 +163,17 @@ class WeeklyTest extends \PHPUnit_Framework_TestCase
 
     public function setUp()
     {
-        $this->IncomeTax = new IncomeTax(new TaxTables2015);
+        $this->IncomeTax = new IncomeTax(new ATOExcelSource([
+            'standardFile' => dirname(dirname(__DIR__)) . DS . 'ext' . DS . '2015' . DS . 'NAT_1004_0.xlsx',
+            'helpSfssFile' => dirname(dirname(__DIR__)) . DS . 'ext' . DS . '2015' . DS . 'NAT_3539_0.xlsx',
+            'seniorsFile' => dirname(dirname(__DIR__)) . DS . 'ext' . DS . '2015' . DS . 'NAT_4466_0.xlsx',
+        ]));
     }
 
     public function testScaleOne()
     {
         foreach ($this->data[1] as $earnings => $expectedTax) {
-            $tax = $this->IncomeTax->calculateTax($earnings, 1, 'weekly', '2015-06-02');
+            $tax = $this->IncomeTax->calculateTax($earnings, 'weekly', '2015-06-02', 'standard', 1);
             $this->assertEquals($expectedTax, $tax, 'Scale 1 - Weekly Earnings: ' . $earnings);
         }
     }
@@ -173,7 +181,7 @@ class WeeklyTest extends \PHPUnit_Framework_TestCase
     public function testScaleTwo()
     {
         foreach ($this->data[2] as $earnings => $expectedTax) {
-            $tax = $this->IncomeTax->calculateTax($earnings, 2, 'weekly', '2015-06-02');
+            $tax = $this->IncomeTax->calculateTax($earnings, 'weekly', '2015-06-02', 'standard', 2);
             $this->assertEquals($expectedTax, $tax, 'Scale 2 - Weekly Earnings: ' . $earnings);
         }
     }
@@ -181,7 +189,7 @@ class WeeklyTest extends \PHPUnit_Framework_TestCase
     public function testScaleThree()
     {
         foreach ($this->data[3] as $earnings => $expectedTax) {
-            $tax = $this->IncomeTax->calculateTax($earnings, 3, 'weekly', '2015-06-02');
+            $tax = $this->IncomeTax->calculateTax($earnings, 'weekly', '2015-06-02', 'standard', 3);
             $this->assertEquals($expectedTax, $tax, 'Scale 3 - Weekly Earnings: ' . $earnings);
         }
     }
