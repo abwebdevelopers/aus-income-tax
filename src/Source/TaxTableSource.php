@@ -14,8 +14,7 @@ interface TaxTableSource
         $foreignResident = false,
         $taxFreeThreshold = true,
         $seniorsOffset = false,
-        $seniorOffsetType = null,
-        $medicareLevyExemption = 'none',
+        $medicareLevyExemption = false,
         $helpDebt = false,
         $sfssDebt = false
     );

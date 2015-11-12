@@ -6,7 +6,7 @@ use ABWeb\IncomeTax\Exception\SourceException;
 
 class ATOExcelSource implements TaxTableSource
 {
-    protected $validMedicareLevyExemptions = ['none', 'half', 'full'];
+    protected $validMedicareLevyExemptions = ['half', 'full'];
     protected $validSeniorsOffsetTypes = ['single', 'illness-separated', 'couple'];
 
     protected $standardMatrix = [];
@@ -45,14 +45,50 @@ class ATOExcelSource implements TaxTableSource
         return $this->loadCoefficients($file, 'seniors', 'Statement of Formula - CSV');
     }
 
-    public function coefficients(
-        $amountBeforeTax = null,
-        $type = 'standard',
-        $scale = 2
-    ) {
+    public function coefficients($amountBeforeTax = null, $type = 'standard', $scale = 2)
+    {
         if (is_array($amountBeforeTax)) {
             extract($amountBeforeTax);
         }
+        $amountBeforeTax = round($amountBeforeTax, 0, PHP_ROUND_HALF_UP) + 0.99;
+
+        // Make sure tax table type is available
+        if (!isset($this->{$type . 'Matrix'})) {
+            return false;
+        }
+
+        // Make sure scale is available and is an array
+        if (!isset($this->{$type . 'Matrix'}[$scale]) && is_array($this->{$type . 'Matrix'}[$scale])) {
+            return false;
+        }
+
+        // Find correct coefficients
+        $percentage = false;
+        $subtraction = false;
+        $default = null;
+        foreach ($this->{$type . 'Matrix'}[$scale] as $bracket => $values) {
+            if ($bracket === 0) {
+                $default = $values;
+                continue;
+            }
+
+            if ($amountBeforeTax < $bracket) {
+                $percentage = $values[0];
+                $subtraction = (isset($values[1])) ? $values[1] : 0;
+                break;
+            }
+        }
+
+        // If the amount did not fall in defined brackets, use the default
+        if ($percentage === false) {
+            $percentage = $default[0];
+            $subtraction = (isset($default[1])) ? $default[1] : 0;
+        }
+
+        return [
+            'percentage' => $percentage,
+            'subtraction' => $subtraction
+        ];
     }
 
     public function determineScale(
@@ -60,8 +96,7 @@ class ATOExcelSource implements TaxTableSource
         $foreignResident = false,
         $taxFreeThreshold = true,
         $seniorsOffset = false,
-        $seniorsOffsetType = null,
-        $medicareLevyExemption = 'none',
+        $medicareLevyExemption = false,
         $helpDebt = false,
         $sfssDebt = false
     ) {
@@ -85,12 +120,9 @@ class ATOExcelSource implements TaxTableSource
         }
 
         // If seniors offset is claimed, we must use the seniors offset scales
-        if ($seniorsOffset === true) {
-            $seniorsOffsetType = (in_array(strtolower($seniorsOffsetType), $this->validSeniorsOffsetTypes)) ? strtolower($seniorsOffsetType) : 'single';
-
-            switch ($seniorsOffsetType) {
+        if ($seniorsOffset !== false && in_array($seniorsOffset, $this->validSeniorsOffsetTypes)) {
+            switch ($seniorsOffset) {
                 case 'single':
-                default:
                     return [
                         'type' => 'seniors',
                         'scale' => 'single'
@@ -111,22 +143,29 @@ class ATOExcelSource implements TaxTableSource
             }
         }
 
-        // If Medicare Levy Exemption is claimed, we will always use either scale 5 (full) or scale 6 (half)
+        // Set default type and scale
         $type = 'standard';
         $scale = 1;
 
-        $medicareLevyExemption = (in_array(strtolower($medicareLevyExemption), $this->validMedicareLevyExemptions)) ? strtolower($medicareLevyExemption) : 'none';
-
-        switch ($medicareLevyExemption) {
-            case 'half':
-                $scale = 6;
-                break;
-            case 'full':
-                $scale = 5;
-                break;
-            case 'none':
-            default:
-                break;
+        // If Medicare Levy Exemption is claimed, we will always use either scale 5 (full) or scale 6 (half)
+        if ($medicareLevyExemption !== false && in_array($medicareLevyExemption, $this->validMedicareLevyExemptions)) {
+            switch ($medicareLevyExemption) {
+                case 'half':
+                    $scale = 6;
+                    break;
+                case 'full':
+                    $scale = 5;
+                    break;
+            }
+        } else {
+            // If Medicare Levy Exemption is not claimed, we need to determine the scale based on claiming the tax free threshold or if a foreign resident
+            if ($foreignResident === true) {
+                $scale = 3;
+            } elseif ($taxFreeThreshold === true) {
+                $scale = 2;
+            } else {
+                $scale = 1;
+            }
         }
 
         // If the user has accumulated a HELP/TLS debt or is on a SFSS plan (or has both), we need to use the correct type
@@ -137,18 +176,6 @@ class ATOExcelSource implements TaxTableSource
         } elseif ($sfssDebt === true) {
             $type = 'sfss';
         }
-
-        // Finally, we need to determine the scale based on claiming the tax free threshold or if a foreign resident
-        if ($medicareLevyExemption === 'none') {
-            if ($foreignResident === true) {
-                $scale = 3;
-            } elseif ($taxFreeThreshold === true) {
-                $scale = 2;
-            } else {
-                $scale = 1;
-            }
-        }
-
         return [
             'type' => $type,
             'scale' => $scale
