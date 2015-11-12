@@ -5,19 +5,18 @@ interface TaxTableSource
 {
     public function coefficients(
         $amountBeforeTax = null,
-        $scale = 2,
-        $claimedHelp = false,
-        $claimedSfss = false,
-        $seniorOffset = false,
-        $seniorOffsetType = null,
-        $medicareAdjustment = null,
-        $variation = null
+        $type = 'standard',
+        $scale = 2
     );
 
     public function determineScale(
         $tfnProvided = true,
-        $taxFreeThreshold = true,
         $foreignResident = false,
-        $medicareLevyExcemption = 'none'
+        $taxFreeThreshold = true,
+        $seniorsOffset = false,
+        $seniorOffsetType = null,
+        $medicareLevyExemption = 'none',
+        $helpDebt = false,
+        $sfssDebt = false
     );
 }
