@@ -37,7 +37,7 @@ class ATOExcelSource implements TaxTableSource
     {
         $this->loadCoefficients($file, 'help', 'HELP or TSL Stat Formula - CSV');
         $this->loadCoefficients($file, 'sfss', 'SFSS Stat Formula - CSV');
-        $this->loadCoefficients($file, 'combo', 'Combo Stat Formula - CSV');
+        return $this->loadCoefficients($file, 'combo', 'Combo Stat Formula - CSV');
     }
 
     public function loadSeniorsFile($file)
@@ -58,7 +58,7 @@ class ATOExcelSource implements TaxTableSource
         }
 
         // Make sure scale is available and is an array
-        if (!isset($this->{$type . 'Matrix'}[$scale]) && is_array($this->{$type . 'Matrix'}[$scale])) {
+        if (!isset($this->{$type . 'Matrix'}[$scale]) || !is_array($this->{$type . 'Matrix'}[$scale])) {
             return false;
         }
 
