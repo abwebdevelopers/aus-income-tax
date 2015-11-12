@@ -34,6 +34,8 @@ class IncomeTax
             $beforeTax = (isset($settings['beforeTax'])) ? floatval($settings['beforeTax']) : 0;
             $frequency = (isset($settings['frequency']) && in_array($settings['frequency'], $this->validFrequencies)) ? $settings['frequency'] : 'weekly';
             $date = (isset($settings['date'])) ? new \DateTime($date) : new \DateTime;
+            $type = (isset($settings['type'])) ? $settings['type'] : 'standard';
+            $scale = (isset($settings['scale'])) ? $settings['scale'] : 1;
 
             if (!isset($settings['scale'])) {
                 unset($settings['beforeTax']);
@@ -47,6 +49,8 @@ class IncomeTax
             if (!isset($date)) {
                 $date = new \DateTime;
             }
+            $type = (isset($type)) ? $type : 'standard';
+            $scale = (isset($scale)) ? $scale : 1;
         }
 
         // Validate values
@@ -75,41 +79,19 @@ class IncomeTax
         switch ($frequency) {
             case 'weekly':
             default:
-                return $this->calculateWeeklyTax($beforeTax, $scale, $date);
+                return $this->calculateWeeklyTax($beforeTax, $date, $type, $scale);
                 break;
         }
     }
 
-    protected function calculateWeeklyTax($beforeTax, $scale, $date = null)
+    protected function calculateWeeklyTax($beforeTax, $date, $type, $scale)
     {
         // Round to nearest dollar and add 99 cents
         $earnings = round($beforeTax, 0, PHP_ROUND_HALF_UP) + 0.99;
-        $percentage = false;
-        $subtraction = 0;
 
-        // Find correct coefficients
-        foreach ($this->source->coefficients($scale) as $bracket => $values) {
-            if ($bracket === 0) {
-                $default = $values;
-                continue;
-            }
-
-            if ($earnings < $bracket) {
-                $percentage = $values[0];
-                if (isset($values[1])) {
-                    $subtraction = $values[1];
-                }
-                break;
-            }
-        }
-
-        // If the amount did not fall in defined brackets, use the default
-        if ($percentage === false) {
-            $percentage = $default[0];
-            if (isset($default[1])) {
-                $subtraction = $default[1];
-            }
-        }
+        // Retrieve coefficients
+        $coefficients = $this->source->coefficients($beforeTax, $type, $scale);
+        extract($coefficients);
 
         // Calculate tax
         if ($percentage === 0) {
