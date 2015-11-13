@@ -30,7 +30,11 @@ class ATOExcelSource implements TaxTableSource
 
     public function loadStandardFile($file)
     {
-        return $this->loadCoefficients($file, 'standard', 'Statement of Formula - CSV');
+        return $this->loadCoefficients([
+            'file' => $file,
+            'type' => 'standard',
+            'sheetName' => 'Statement of Formula - CSV'
+        ]);
     }
 
     public function loadHelpSfssFile($file)
@@ -42,7 +46,11 @@ class ATOExcelSource implements TaxTableSource
 
     public function loadSeniorsFile($file)
     {
-        return $this->loadCoefficients($file, 'seniors', 'Statement of Formula - CSV');
+        return $this->loadCoefficients([
+            'file' => $file,
+            'type' => 'seniors',
+            'sheetName' => 'Statement of Formula - CSV'
+        ]);
     }
 
     public function coefficients($amountBeforeTax = null, $type = 'standard', $scale = 2)
@@ -193,7 +201,7 @@ class ATOExcelSource implements TaxTableSource
         $finfo = new \finfo(FILEINFO_MIME_TYPE);
         $mime = $finfo->file($file);
 
-        if ($mime !== 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') {
+        if ($mime !== 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' && $mime !== 'application/octet-stream') {
             throw new SourceException('File &quot;' . $file . '&quot; is not a valid XLSX file.', 31251);
             return false;
         }
@@ -289,7 +297,7 @@ class ATOExcelSource implements TaxTableSource
         $subtraction = $row[3];
 
         // Scale must be numeric or a string
-        if (!is_numeric($scale) && !is_string($scale)) {
+        if (empty($scale) || (!is_numeric($scale) && !is_string($scale))) {
             throw new SourceException('Scale must be numeric value or a string');
             return false;
         }
@@ -301,13 +309,13 @@ class ATOExcelSource implements TaxTableSource
         }
 
         // Multiplier must be a float or a float formatted string
-        if (!is_string($multiplier) && !is_float($multiplier) && (is_string($multiplier) && !preg_match('/^[0-9]+\.[0-9]+$/', $multiplier))) {
+        if (empty($multiplier) || (!is_float($multiplier) && (!is_string($multiplier) || (is_string($multiplier) && !preg_match('/^[0-9]+\.[0-9]+$/', $multiplier))))) {
             throw new SourceException('Multiplier must be a float');
             return false;
         }
 
         // Subtraction must be a float or a float formatted string, but can be empty
-        if (!empty($subtraction) && !is_string($subtraction) && !is_float($subtraction) && (is_string($subtraction) && !preg_match('/^[0-9]+\.[0-9]+$/', $subtraction))) {
+        if (!empty($subtraction) && !is_float($subtraction) && (!is_string($subtraction) || (is_string($subtraction) && !preg_match('/^[0-9]+\.[0-9]+$/', $subtraction)))) {
             throw new SourceException('Subtraction value must be a float');
             return false;
         }
