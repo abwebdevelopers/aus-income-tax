@@ -77,6 +77,9 @@ class IncomeTax
             default:
                 return $this->calculateWeeklyTax($beforeTax, $date, $type, $scale);
                 break;
+            case 'fortnightly':
+                return $this->calculateFortnightlyTax($beforeTax, $date, $type, $scale);
+                break;
         }
     }
 
@@ -91,7 +94,7 @@ class IncomeTax
         }
 
         // Retrieve coefficients
-        $coefficients = $this->source->coefficients($beforeTax, $type, $scale);
+        $coefficients = $this->source->coefficients($earnings, $type, $scale);
         extract($coefficients);
 
         // Calculate tax
@@ -109,5 +112,39 @@ class IncomeTax
         } else {
             return round($tax, 0, PHP_ROUND_HALF_UP);
         }
+    }
+
+    protected function calculateFortnightlyTax($beforeTax, $date, $type, $scale)
+    {
+        if ($scale === '4 resident' || $scale === '4 non resident') {
+            // Scale 4 earnings have all cents ignored
+            $earnings = floor($beforeTax / 2);
+        } else {
+            // Divide fortnightly income by two, ignoring cents, then add 99 cents
+            $earnings = floor($beforeTax / 2) + 0.99;
+        }
+
+        // Retrieve coefficients
+        $coefficients = $this->source->coefficients($earnings, $type, $scale);
+        extract($coefficients);
+
+        // Calculate tax
+        if ($percentage === 0) {
+            return 0;
+        }
+
+        $tax = ($earnings * $percentage) - $subtraction;
+
+        // If it's a leap year, add additional
+
+        if ($scale === '4 resident' || $scale === '4 non resident') {
+            // When scale 4 is used, any cents in the tax must be ignored
+            $tax = floor($tax);
+        } else {
+            $tax = round($tax, 0, PHP_ROUND_HALF_UP);
+        }
+
+        // Fortnightly tax is weekly tax doubled
+        return ($tax * 2);
     }
 }
