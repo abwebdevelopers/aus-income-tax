@@ -50,7 +50,6 @@ class ATOExcelSource implements TaxTableSource
         if (is_array($amountBeforeTax)) {
             extract($amountBeforeTax);
         }
-        $amountBeforeTax = round($amountBeforeTax, 0, PHP_ROUND_HALF_UP) + 0.99;
 
         // Make sure tax table type is available
         if (!isset($this->{$type . 'Matrix'})) {
