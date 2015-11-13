@@ -267,8 +267,6 @@ class WeeklyTest extends \PHPUnit_Framework_TestCase
     {
         $this->IncomeTax = new IncomeTax(new ATOExcelSource([
             'standardFile' => dirname(dirname(__DIR__)) . DS . 'ext' . DS . '2015' . DS . 'NAT_1004_0.xlsx',
-            'helpSfssFile' => dirname(dirname(__DIR__)) . DS . 'ext' . DS . '2015' . DS . 'NAT_3539_0.xlsx',
-            'seniorsFile' => dirname(dirname(__DIR__)) . DS . 'ext' . DS . '2015' . DS . 'NAT_4466_0.xlsx',
         ]));
     }
 
