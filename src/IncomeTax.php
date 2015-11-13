@@ -46,9 +46,7 @@ class IncomeTax
                 $scale = $settings['scale'];
             }
         } else {
-            if (!isset($date)) {
-                $date = new \DateTime;
-            }
+            $date = (isset($date)) ? new \DateTime($date) : new \DateTime;
             $type = (isset($type)) ? $type : 'standard';
             $scale = (isset($scale)) ? $scale : 1;
         }
@@ -80,6 +78,9 @@ class IncomeTax
             case 'fortnightly':
                 return $this->calculateFortnightlyTax($beforeTax, $date, $type, $scale);
                 break;
+            case 'monthly':
+                return $this->calculateMonthlyTax($beforeTax, $date, $type, $scale);
+                break;
         }
     }
 
@@ -104,14 +105,25 @@ class IncomeTax
 
         $tax = ($earnings * $percentage) - $subtraction;
 
-        // If it's a leap year, add additional
-
         if ($scale === '4 resident' || $scale === '4 non resident') {
             // When scale 4 is used, any cents in the tax must be ignored
-            return floor($tax);
+            $tax = floor($tax);
         } else {
-            return round($tax, 0, PHP_ROUND_HALF_UP);
+            $tax = round($tax, 0, PHP_ROUND_HALF_UP);
         }
+
+        // If it's a leap year, add additional withholding
+        if (intval($date->format('Y')) % 4 === 0) {
+            if ($earnings >= 3450) {
+                $tax += 10;
+            } else if ($earnings >= 1525) {
+                $tax += 4;
+            } else if ($earnings >= 725) {
+                $tax += 3;
+            }
+        }
+
+        return $tax;
     }
 
     protected function calculateFortnightlyTax($beforeTax, $date, $type, $scale)
@@ -135,8 +147,6 @@ class IncomeTax
 
         $tax = ($earnings * $percentage) - $subtraction;
 
-        // If it's a leap year, add additional
-
         if ($scale === '4 resident' || $scale === '4 non resident') {
             // When scale 4 is used, any cents in the tax must be ignored
             $tax = floor($tax);
@@ -145,6 +155,61 @@ class IncomeTax
         }
 
         // Fortnightly tax is weekly tax doubled
-        return ($tax * 2);
+        $tax *= 2;
+
+        // If it's a leap year, add additional withholding
+        if (intval($date->format('Y')) % 4 === 0) {
+            if ($earnings >= 6800) {
+                $tax += 42;
+            } else if ($earnings >= 3050) {
+                $tax += 17;
+            } else if ($earnings >= 1400) {
+                $tax += 12;
+            }
+        }
+
+        return $tax;
+    }
+
+    protected function calculateMonthlyTax($beforeTax, $date, $type, $scale)
+    {
+        // If a monthly payment ends in 33 cents, it needs to be bumped up to 34
+        if ($beforeTax - floor($beforeTax) == 0.33) {
+            $beforeTax += 0.01;
+        }
+
+        // Then, we need to multiply this by 3, then divide by 13
+        $beforeTax = ($beforeTax * 3) / 13;
+
+        if ($scale === '4 resident' || $scale === '4 non resident') {
+            // Scale 4 earnings have all cents ignored
+            $earnings = floor($beforeTax);
+        } else {
+            // Ignore cents value, add 99 cents
+            $earnings = floor($beforeTax) + 0.99;
+        }
+
+        // Retrieve coefficients
+        $coefficients = $this->source->coefficients($earnings, $type, $scale);
+        extract($coefficients);
+
+        // Calculate tax
+        if ($percentage === 0) {
+            return 0;
+        }
+
+        $tax = ($earnings * $percentage) - $subtraction;
+
+        if ($scale === '4 resident' || $scale === '4 non resident') {
+            // When scale 4 is used, any cents in the tax must be ignored
+            $tax = floor($tax);
+        } else {
+            $tax = round($tax, 0, PHP_ROUND_HALF_UP);
+        }
+
+        // Adjust back into a monthly tax value
+        $tax = ($tax * 13) / 3;
+
+        return round($tax, 0, PHP_ROUND_HALF_UP);
     }
 }
