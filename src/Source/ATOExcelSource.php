@@ -226,14 +226,19 @@ class ATOExcelSource implements TaxTableSource
         // Initiate reader
         $reader = new \SpreadsheetReader($file);
         $sheets = $reader->Sheets();
-        $sheets = array_map('strtolower', $sheets);
+
+        // Make a map of lowercase sheet names
+        $sheets_lower = [];
+        foreach ($sheets as $key => $name) {
+            $sheets_lower[$key] = strtolower($name);
+        }
 
         // Use correct sheet
-        if ($sheetName === null || count($sheets) === 1 || !in_array(strtolower($sheetName), $sheets)) {
+        if ($sheetName === null || count($sheets) === 1 || !in_array(strtolower($sheetName), $sheets_lower)) {
             // Use the first sheet
             $reader->changeSheet(0);
         } else {
-            $key = array_search(strtolower($sheetName), $sheets);
+            $key = array_search(strtolower($sheetName), $sheets_lower);
             $reader->changeSheet($key);
         }
 
@@ -303,20 +308,20 @@ class ATOExcelSource implements TaxTableSource
         }
 
         // Upper gross limit must be a numeric value
-        if (!is_numeric($upperGrossLimit)) {
-            throw new SourceException('Upper Gross limit must be a numeric value');
+        if (!is_numeric($upperGrossLimit) || (int) $upperGrossLimit < 0) {
+            throw new SourceException('Upper Gross limit must be a positive numeric value');
             return false;
         }
 
         // Multiplier must be a float or a float formatted string
-        if (empty($multiplier) || (!is_float($multiplier) && (!is_string($multiplier) || (is_string($multiplier) && !preg_match('/^[0-9]+\.[0-9]+$/', $multiplier))))) {
-            throw new SourceException('Multiplier must be a float');
+        if (empty($multiplier) || (!is_float($multiplier) && (!is_string($multiplier) || (is_string($multiplier) && !preg_match('/^[0-9]+\.[0-9]+$/', $multiplier)))) || (float) $multiplier < 0) {
+            throw new SourceException('Multiplier must be a positive float');
             return false;
         }
 
         // Subtraction must be a float or a float formatted string, but can be empty
-        if (!empty($subtraction) && !is_float($subtraction) && (!is_string($subtraction) || (is_string($subtraction) && !preg_match('/^[0-9]+\.[0-9]+$/', $subtraction)))) {
-            throw new SourceException('Subtraction value must be a float');
+        if (!empty($subtraction) && !is_float($subtraction) && (!is_string($subtraction) || (is_string($subtraction) && !preg_match('/^[0-9]+\.[0-9]+$/', $subtraction))) || (float) $subtraction < 0) {
+            throw new SourceException('Subtraction value must be a positive float');
             return false;
         }
 
