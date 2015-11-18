@@ -1,7 +1,8 @@
 {
     "name": "abweb/income-tax",
     "description": "Australian Income Tax calculator, based on the rules of the 2015 ATO tax tables",
-    "version": "1.0.0-alpha1",
+    "version": "1.0.0-alpha2",
+    "time": "2015-11-18",
     "type": "library",
     "require": {
         "php": ">=5.6.0",
