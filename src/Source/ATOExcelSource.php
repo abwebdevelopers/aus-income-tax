@@ -314,13 +314,13 @@ class ATOExcelSource implements TaxTableSource
         }
 
         // Multiplier must be a float or a float formatted string
-        if (empty($multiplier) || (!is_float($multiplier) && (!is_string($multiplier) || (is_string($multiplier) && !preg_match('/^[0-9]+\.[0-9]+$/', $multiplier)))) || (float) $multiplier < 0) {
+        if (preg_match('/^\s*$/', $multiplier) || (!is_float($multiplier) && (!is_string($multiplier) || (is_string($multiplier) && !preg_match('/^[0-9]+(\.[0-9]+)*$/', $multiplier)))) || (float) $multiplier < 0) {
             throw new SourceException('Multiplier must be a positive float');
             return false;
         }
 
         // Subtraction must be a float or a float formatted string, but can be empty
-        if (!empty($subtraction) && !is_float($subtraction) && (!is_string($subtraction) || (is_string($subtraction) && !preg_match('/^[0-9]+\.[0-9]+$/', $subtraction))) || (float) $subtraction < 0) {
+        if (!empty($subtraction) && !is_float($subtraction) && (!is_string($subtraction) || (is_string($subtraction) && !preg_match('/^[0-9]+(\.[0-9]+)*$/', $subtraction))) || (float) $subtraction < 0) {
             throw new SourceException('Subtraction value must be a positive float');
             return false;
         }
