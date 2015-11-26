@@ -9,6 +9,12 @@ class ATOExcelSource implements TaxTableSource
     protected $validMedicareLevyExemptions = ['half', 'full'];
     protected $validSeniorsOffsetTypes = ['single', 'illness-separated', 'couple'];
 
+    protected $standardSheet = 'Statement of Formula - CSV';
+    protected $helpSheet = 'HELP or TSL Stat Formula - CSV';
+    protected $sfssSheet = 'SFSS Stat Formula - CSV';
+    protected $comboSheet = 'Combo Stat Formula - CSV';
+    protected $seniorsSheet = 'Statement of Formula - CSV';
+
     protected $standardMatrix = [];
     protected $helpMatrix = [];
     protected $sfssMatrix = [];
@@ -17,39 +23,79 @@ class ATOExcelSource implements TaxTableSource
 
     public function __construct($settings = [])
     {
+        // Set sheet names
+        if (!empty($settings['standardSheet'])) {
+            $this->standardSheet = (string) $settings['standardSheet'];
+        }
+        if (!empty($settings['helpSheet'])) {
+            $this->helpSheet = (string) $settings['helpSheet'];
+        }
+        if (!empty($settings['sfssSheet'])) {
+            $this->sfssSheet = (string) $settings['sfssSheet'];
+        }
+        if (!empty($settings['comboSheet'])) {
+            $this->comboSheet = (string) $settings['comboSheet'];
+        }
+        if (!empty($settings['seniorsSheet'])) {
+            $this->seniorsSheet = (string) $settings['seniorsSheet'];
+        }
+
+        // Set source files
         if (!empty($settings['standardFile'])) {
-            $this->loadStandardFile($settings['standardFile']);
+            $this->loadStandardFile((string) $settings['standardFile']);
         }
         if (!empty($settings['helpSfssFile'])) {
-            $this->loadHelpSfssFile($settings['helpSfssFile']);
+            $this->loadHelpSfssFile((string) $settings['helpSfssFile']);
         }
         if (!empty($settings['seniorsFile'])) {
-            $this->loadSeniorsFile($settings['seniorsFile']);
+            $this->loadSeniorsFile((string) $settings['seniorsFile']);
         }
     }
 
-    public function loadStandardFile($file)
+    public function loadStandardFile($file, $sheet = null)
     {
+        if ($sheet === null) {
+            $sheet = $this->standardSheet;
+        }
+
         return $this->loadCoefficients([
             'file' => $file,
             'type' => 'standard',
-            'sheetName' => 'Statement of Formula - CSV'
+            'sheetName' => $sheet
         ]);
     }
 
-    public function loadHelpSfssFile($file)
-    {
-        $this->loadCoefficients($file, 'help', 'HELP or TSL Stat Formula - CSV');
-        $this->loadCoefficients($file, 'sfss', 'SFSS Stat Formula - CSV');
-        return $this->loadCoefficients($file, 'combo', 'Combo Stat Formula - CSV');
+    public function loadHelpSfssFile(
+        $file,
+        $helpSheet = null,
+        $sfssSheet = null,
+        $comboSheet = null
+    ) {
+        if ($helpSheet === null) {
+            $helpSheet = $this->helpSheet;
+        }
+        if ($sfssSheet === null) {
+            $sfssSheet = $this->sfssSheet;
+        }
+        if ($comboSheet === null) {
+            $comboSheet = $this->comboSheet;
+        }
+
+        $this->loadCoefficients($file, 'help', $helpSheet);
+        $this->loadCoefficients($file, 'sfss', $sfssSheet);
+        return $this->loadCoefficients($file, 'combo', $comboSheet);
     }
 
-    public function loadSeniorsFile($file)
+    public function loadSeniorsFile($file, $sheet = null)
     {
+        if ($sheet === null) {
+            $sheet = $this->standardSheet;
+        }
+        
         return $this->loadCoefficients([
             'file' => $file,
             'type' => 'seniors',
-            'sheetName' => 'Statement of Formula - CSV'
+            'sheetName' => $sheet
         ]);
     }
 
