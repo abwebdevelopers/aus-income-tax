@@ -1,8 +1,10 @@
 <?php
-namespace ABWeb\IncomeTax\Source;
+namespace ABWebDevelopers\AusIncomeTax\Source;
 
-use ABWeb\IncomeTax\Source\TaxTableSource;
-use ABWeb\IncomeTax\Exception\SourceException;
+use ABWebDevelopers\AusIncomeTax\Source\TaxTableSource;
+use ABWebDevelopers\AusIncomeTax\Exception\SourceException;
+use \PhpOffice\PhpSpreadsheet\Reader\Xlsx as XlsxReader;
+use ABWebDevelopers\AusIncomeTax\Source\ReadFilter\ATOExcelReadFilter;
 
 class ATOExcelSource implements TaxTableSource
 {
@@ -91,7 +93,7 @@ class ATOExcelSource implements TaxTableSource
         if ($sheet === null) {
             $sheet = $this->standardSheet;
         }
-        
+
         return $this->loadCoefficients([
             'file' => $file,
             'type' => 'seniors',
@@ -270,57 +272,35 @@ class ATOExcelSource implements TaxTableSource
         $this->{$type . 'Matrix'} = [];
 
         // Initiate reader
-        $reader = new \SpreadsheetReader($file);
-        $sheets = $reader->Sheets();
-
-        // Make a map of lowercase sheet names
-        $sheets_lower = [];
-        foreach ($sheets as $key => $name) {
-            $sheets_lower[$key] = strtolower($name);
-        }
-
-        // Use correct sheet
-        if ($sheetName === null || count($sheets) === 1 || !in_array(strtolower($sheetName), $sheets_lower)) {
-            // Use the first sheet
-            $reader->changeSheet(0);
-        } else {
-            $key = array_search(strtolower($sheetName), $sheets_lower);
-            $reader->changeSheet($key);
-        }
+        $reader = new XlsxReader();
+        $reader->setLoadSheetsOnly($sheetName);
+        $reader->setReadFilter(new ATOExcelReadFilter);
+        $spreadsheet = $reader->load($file)->getActiveSheet();
 
         // Load rows
-        $empty = 0;
-        $validRow = false;
-        foreach ($reader as $i => $row) {
-            // Skip headers
-            if ($i === 0) {
-                continue;
-            }
+        foreach ($spreadsheet->getRowIterator() as $row) {
+            $cells = $row->getCellIterator();
+            $data = [];
 
-            // Skip empty rows - if we encounter 3 in a row, break the loop
-            if (trim($row[0]) == '') {
-                ++$empty;
-                continue;
-            } else {
-                $empty = 0;
-            }
-            if ($empty === 3) {
-                break;
+            foreach ($cells as $i => $cell) {
+                $value = $cell->getValue();
+
+                // If the first value is null, skip this row
+                if ($i === 'A' && $value === null) {
+                    continue 2;
+                }
+
+                $data[] = $value;
             }
 
             // Check data row
-            try {
-                $this->checkRow($row);
-            } catch (SourceException $e) {
-                continue;
-            }
-            $validRow = true;
+            $this->checkRow($data);
 
             // Populate data
-            $scale = strtolower($row[0]);
-            $upperGrossLimit = $row[1];
-            $multiplier = $row[2];
-            $subtraction = $row[3];
+            $scale = strtolower($data[0]);
+            $upperGrossLimit = $data[1];
+            $multiplier = $data[2];
+            $subtraction = $data[3];
 
             if (!isset($this->{$type . 'Matrix'}[$scale])) {
                 $this->{$type . 'Matrix'}[$scale] = [];
@@ -329,12 +309,9 @@ class ATOExcelSource implements TaxTableSource
                 // Set default coefficients
                 $upperGrossLimit = 0;
             }
-            $this->{$type . 'Matrix'}[(string) $scale][(int) $upperGrossLimit] = (empty($subtraction)) ? [(float) $multiplier] : [(float) $multiplier, (float) $subtraction];
-        }
-
-        if ($validRow === false) {
-            throw new SourceException('Did not find a valid coefficients row from source', 31253);
-            return false;
+            $this->{$type . 'Matrix'}[(string) $scale][(int) $upperGrossLimit] = (empty($subtraction))
+                ? [(float) $multiplier]
+                : [(float) $multiplier, (float) $subtraction];
         }
 
         return true;
