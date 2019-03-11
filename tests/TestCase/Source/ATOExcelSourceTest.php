@@ -1,48 +1,59 @@
 <?php
-namespace ABWeb\IncomeTax\Tests\TestCase;
+namespace ABWebDevelopers\AusIncomeTax\Tests\TestCase;
 
-use ABWeb\IncomeTax\Source\ATOExcelSource;
+use PHPUnit\Framework\TestCase;
+use ABWebDevelopers\AusIncomeTax\Source\ATOExcelSource;
 
-if (!defined('DS')) {
-    define('DS', DIRECTORY_SEPARATOR);
-}
-
-class ATOExcelSourceTest extends \PHPUnit_Framework_TestCase
+class ATOExcelSourceTest extends TestCase
 {
-    public function setUp()
+    /**
+     * Directory where Excel Source test fixtures are stored
+     *
+     * @var string
+     */
+    public $sourceDirectory;
+
+    public function setUp(): void
     {
+        if (!defined('DS')) {
+            define('DS', $_ENV['DIRECTORY_SEPARATOR'] ?? '/');
+        }
+
+        $this->sourceDirectory = implode(DS, [
+            dirname(dirname(__DIR__)),
+            'fixtures',
+            'tax-tables',
+        ]) . DS;
+
         $this->ATOExcelSource = new ATOExcelSource([
-            'standardFile' => dirname(dirname(dirname(__DIR__))) . DS . 'ext' . DS . '2015' . DS . 'NAT_1004_0.xlsx',
-            'helpSfssFile' => dirname(dirname(dirname(__DIR__))) . DS . 'ext' . DS . '2015' . DS . 'NAT_3539_0.xlsx',
-            'seniorsFile' => dirname(dirname(dirname(__DIR__))) . DS . 'ext' . DS . '2015' . DS . 'NAT_4466_0.xlsx',
+            'standardFile' => $this->sourceDirectory . 'NAT_1004_2018.xlsx',
+            'helpSfssFile' => $this->sourceDirectory . 'NAT_3539_2018.xlsx',
+            'seniorsFile' => $this->sourceDirectory . 'NAT_4466_2018.xlsx',
         ]);
     }
 
-    /**
-    * @expectedException \ABWeb\IncomeTax\Exception\SourceException
-    * @expectedExceptionCode 31250
-    **/
     public function testMissingSource()
     {
-        $this->ATOExcelSource->loadStandardFile(dirname(dirname(__DIR__)) . DS . 'ext' . DS . 'MISSING_FILE.xlsx');
+        $this->expectException(\ABWebDevelopers\AusIncomeTax\Exception\SourceException::class);
+        $this->expectExceptionCode(31250);
+
+        $this->ATOExcelSource->loadStandardFile($this->sourceDirectory . 'MISSING_FILE.xlsx');
     }
 
-    /**
-    * @expectedException \ABWeb\IncomeTax\Exception\SourceException
-    * @expectedExceptionCode 31251
-    **/
     public function testInvalidSource()
     {
-        $this->ATOExcelSource->loadStandardFile(dirname(dirname(__DIR__)) . DS . 'ext' . DS . 'NAT_INVALID.txt');
+        $this->expectException(\ABWebDevelopers\AusIncomeTax\Exception\SourceException::class);
+        $this->expectExceptionCode(31251);
+
+        $this->ATOExcelSource->loadStandardFile($this->sourceDirectory . 'NAT_INVALID.txt');
     }
 
-    /**
-    * @expectedException \ABWeb\IncomeTax\Exception\SourceException
-    * @expectedExceptionCode 31253
-    **/
     public function testInvalidSourceRows()
     {
-        $this->ATOExcelSource->loadStandardFile(dirname(dirname(__DIR__)) . DS . 'ext' . DS . 'NAT_INVALID.xlsx');
+        $this->expectException(\ABWebDevelopers\AusIncomeTax\Exception\SourceException::class);
+        $this->expectExceptionCode(31253);
+
+        $this->ATOExcelSource->loadStandardFile($this->sourceDirectory . 'NAT_INVALID.xlsx');
     }
 
     public function testCoefficientsArrayParameter()
@@ -55,7 +66,7 @@ class ATOExcelSourceTest extends \PHPUnit_Framework_TestCase
 
         $this->assertEquals([
             'percentage' => 0.3450,
-            'subtraction' => 41.1734
+            'subtraction' => 41.7311
         ], $coefficients);
     }
 
