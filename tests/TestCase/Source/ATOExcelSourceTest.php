@@ -51,7 +51,7 @@ class ATOExcelSourceTest extends TestCase
     public function testInvalidSourceRows()
     {
         $this->expectException(\ABWebDevelopers\AusIncomeTax\Exception\SourceException::class);
-        $this->expectExceptionCode(31253);
+        $this->expectExceptionCode(31200);
 
         $this->ATOExcelSource->loadStandardFile($this->sourceDirectory . 'NAT_INVALID.xlsx');
     }
