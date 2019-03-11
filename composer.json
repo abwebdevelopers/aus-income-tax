@@ -1,40 +1,32 @@
 {
-    "name": "abweb/income-tax",
-    "description": "Australian Income Tax calculator, based on the rules of the 2015 ATO tax tables",
-    "version": "1.0.0-alpha3",
-    "time": "2015-11-27",
+    "name": "abwebdevelopers/aus-income-tax",
+    "description": "Calculates withheld amounts from gross income as per the Australian Tax Office PAYG (pay-as-you-go) tax tables",
     "type": "library",
     "require": {
-        "php": ">=5.6.0",
-        "bennothommo/spreadsheet-reader": ">=0.5.12"
+        "php": ">=7.1",
+        "phpoffice/phpspreadsheet": "^1.6"
     },
     "require-dev": {
-        "phpunit/phpunit": "^5.0",
+        "phpunit/phpunit": "^7.0|^8.0",
         "jakub-onderka/php-parallel-lint": "0.*",
         "jakub-onderka/php-console-highlighter": "0.*"
     },
-    "license": "proprietary",
+    "license": "MIT",
     "authors": [
         {
-            "name": "Ben Thomson",
-            "email": "ben@abweb.com.au",
+            "name": "AB Web Developers",
+            "email": "info@abweb.com.au",
             "role": "Developer"
         }
     ],
     "autoload": {
         "psr-4": {
-            "ABWeb\\IncomeTax\\": "src/"
+            "ABWebDevelopers\\AusIncomeTax\\": "src/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "ABWeb\\IncomeTax\\Tests\\": "tests/"
+            "ABWebDevelopers\\AusIncomeTax\\Tests\\": "tests/"
         }
-    },
-    "repositories": [
-        {
-            "type": "vcs",
-            "url": "git@github.com:bennothommo/spreadsheet-reader.git"
-        }
-    ]
+    }
 }
