@@ -1,5 +1,5 @@
 <?php
-namespace ABWeb\IncomeTax\Exception;
+namespace ABWebDevelopers\AusIncomeTax\Exception;
 
 class SourceException extends \Exception
 {

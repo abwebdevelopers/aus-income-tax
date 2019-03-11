@@ -1,8 +1,8 @@
 <?php
-namespace ABWeb\IncomeTax;
+namespace ABWebDevelopers\AusIncomeTax;
 
-use ABWeb\IncomeTax\Exception\SourceException;
-use ABWeb\IncomeTax\Exception\CalculationException;
+use ABWebDevelopers\AusIncomeTax\Exception\SourceException;
+use ABWebDevelopers\AusIncomeTax\Exception\CalculationException;
 
 class IncomeTax
 {
@@ -16,7 +16,7 @@ class IncomeTax
         }
     }
 
-    public function loadSource(\ABWeb\IncomeTax\Source\TaxTableSource $source)
+    public function loadSource(\ABWebDevelopers\AusIncomeTax\Source\TaxTableSource $source)
     {
         $this->source = $source;
         return true;

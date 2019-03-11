@@ -1,5 +1,5 @@
 <?php
-namespace ABWeb\IncomeTax\Source;
+namespace ABWebDevelopers\AusIncomeTax\Source;
 
 interface TaxTableSource
 {

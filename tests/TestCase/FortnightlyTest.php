@@ -1,8 +1,8 @@
 <?php
-namespace ABWeb\IncomeTax\Tests\TestCase;
+namespace ABWebDevelopers\AusIncomeTax\Tests\TestCase;
 
-use ABWeb\IncomeTax\IncomeTax;
-use ABWeb\IncomeTax\Source\ATOExcelSource;
+use ABWebDevelopers\AusIncomeTax\IncomeTax;
+use ABWebDevelopers\AusIncomeTax\Source\ATOExcelSource;
 
 if (!defined('DS')) {
     define('DS', DIRECTORY_SEPARATOR);

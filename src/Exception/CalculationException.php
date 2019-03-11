@@ -1,5 +1,5 @@
 <?php
-namespace ABWeb\IncomeTax\Exception;
+namespace ABWebDevelopers\AusIncomeTax\Exception;
 
 class CalculationException extends \Exception
 {
