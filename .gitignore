@@ -4,12 +4,5 @@
 # Vendor Files
 /vendor
 
-# OS Generated Files
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-Icon?
-ehthumbs.db
-Thumbs.db
+# Other Files
+.phpunit.result.cache
