@@ -1,97 +1,214 @@
 <?php
 namespace ABWebDevelopers\AusIncomeTax;
 
+use ABWebDevelopers\AusIncomeTax\Source\TaxTableSource;
 use ABWebDevelopers\AusIncomeTax\Exception\SourceException;
 use ABWebDevelopers\AusIncomeTax\Exception\CalculationException;
 
+/**
+ * Income Tax class.
+ *
+ * Processes and calculates the tax withheld amount of a given gross income amount according to the rules of the
+ * Australian Tax Office.
+ *
+ * @copyright 2019 AB Web Developers
+ * @author Ben Thomson <ben@abweb.com.au>
+ * @license MIT
+ */
 class IncomeTax
 {
+    /**
+     * The source to read tax calculation coefficients from.
+     *
+     * @var \ABWebDevelopers\AusIncomeTax\Source\TaxTableSource
+     */
     protected $source = null;
-    protected $validFrequencies = ['weekly', 'fortnightly', 'monthly', 'quarterly'];
 
-    public function __construct($source = null)
+    /**
+     * A list of valid payment frequency values.
+     *
+     * @var array
+     */
+    protected $validFrequencies = [
+        'weekly',
+        'fortnightly',
+        'monthly',
+        'quarterly'
+    ];
+
+    public function __construct(TaxTableSource $source = null)
     {
-        if (!empty($source)) {
+        if (isset($source)) {
             $this->loadSource($source);
         }
     }
 
-    public function loadSource(\ABWebDevelopers\AusIncomeTax\Source\TaxTableSource $source)
+    /**
+     * Loads a valid tax table coefficient source.
+     *
+     * @param TaxTableSource $source
+     * @return IncomeTax
+     */
+    public function loadSource(TaxTableSource $source): IncomeTax
     {
         $this->source = $source;
-        return true;
+
+        return $this;
     }
 
-    public function calculateTax($beforeTax = 0, $frequency = 'weekly', $date = null, $type = null, $scale = null)
-    {
+    /**
+     * Calculates the tax withheld amount for a given gross income.
+     *
+     * @param integer $gross The gross income to calculate tax for, in dollars (no cents). This should be rounded down.
+     * @param string $frequency The payment frequency. Must be a value provided by `$validFrequencies`.
+     * @param \DateTimeInterface $date The payment date. Tax can be affected by leap years, so the date must be provided
+     *                                 to check for this instance. If not provided, it will default to today.
+     * @param array $threshold The tax threshold to apply. The array should contain two values:
+     *                         - `type`: A taxation type (ie. standard, seniors, etc.)
+     *                         - `scale`: A taxation scale (ie. tax free threshold applied or not)
+     *                         Alternatively, you may provide the parameters for `determineScale()` in an array to have
+     *                         the library automatically determine the correct type and scale.
+     *
+     * @return int The amount to withhold for tax, in dollars (no cents).
+     */
+    public function calculateTax(
+        int $gross = 0,
+        string $frequency = 'weekly',
+        \DateTimeInterface $date = null,
+        array $threshold = null
+    ) {
         if (!isset($this->source)) {
-            throw new SourceException('No source specified.');
+            throw new SourceException('You must specify a Tax Table Source.');
             return false;
         }
 
-        if (is_array($beforeTax)) {
-            $settings = $beforeTax;
-            $beforeTax = (isset($settings['beforeTax'])) ? floatval($settings['beforeTax']) : 0;
-            $frequency = (isset($settings['frequency']) && in_array($settings['frequency'], $this->validFrequencies)) ? $settings['frequency'] : 'weekly';
-            $date = (isset($settings['date'])) ? new \DateTime($date) : new \DateTime;
-            $type = (isset($settings['type'])) ? $settings['type'] : 'standard';
-            $scale = (isset($settings['scale'])) ? $settings['scale'] : 1;
-
-            if (!isset($settings['scale'])) {
-                unset($settings['beforeTax']);
-                unset($settings['frequency']);
-                unset($settings['date']);
-                $scale = $this->determineScale($settings);
-            } else {
-                $scale = $settings['scale'];
-            }
-        } else {
-            $date = (isset($date)) ? new \DateTime($date) : new \DateTime;
-            $type = (isset($type)) ? $type : 'standard';
-            $scale = (isset($scale)) ? $scale : 1;
-        }
-
-        // Validate values
-        if (!is_int($beforeTax) && !is_float($beforeTax)) {
-            throw new CalculationException('Before tax amount must be a number value', 31301);
-            return false;
-        }
-        if ($beforeTax < 0) {
-            throw new CalculationException('Before tax amount cannot be negative', 31302);
-            return false;
+        // Check parameters
+        if ($gross < 0) {
+            throw new CalculationException('Gross income amount cannot be negative', 2001);
         }
         if (!in_array($frequency, $this->validFrequencies)) {
-            throw new CalculationException('Invalid payment frequency specified - must be "weekly", "fortnightly", "monthly" or "quarterly"', 31303);
+            throw new CalculationException(
+                'Invalid payment frequency specified - must be one of the following value: ' .
+                implode(', ', $this->validFrequencies),
+                2002
+            );
             return false;
         }
-        if ($date === false) {
-            throw new CalculationException('Invalid payment date specified.', 312304);
-            return false;
+        if (!isset($threshold['type']) && !isset($threshold['scale'])) {
+            // Check to see if this is an array to pass on to `determineScale()`
+            $parameters = [
+                'tfnProvided',
+                'foreignResident',
+                'taxFreeThreshold',
+                'seniorsOffset',
+                'medicareLevyExemption',
+                'helpDebt',
+                'sfssDebt'
+            ];
+            $diff = array_diff($parameters, $threshold);
+
+            if (count($diff)) {
+                throw new CalculationException(
+                    'Missing parameters for automatically determining scale: ' .
+                    implode(', ', $diff),
+                    2001
+                );
+            }
+
+            $threshold = $this->determineThreshold(
+                $threshold['tfnProvided'],
+                $threshold['foreignResident'],
+                $threshold['taxFreeThreshold'],
+                $threshold['seniorsOffset'],
+                $threshold['medicareLevyExemption'],
+                $threshold['helpDebt'],
+                $threshold['sfssDebt']
+            );
+        }
+
+        // Validate threshold
+        if (!$this->validateThreshold($threshold['type'], $threshold['scale'])) {
+            throw new CalculationException(
+                'Invalid tax threshold provided',
+                2001
+            );
+        }
+
+        // If date is not provided, default to today's date
+        if (!isset($date)) {
+            $date = new \DateTime;
         }
 
         // Calculate tax
         switch ($frequency) {
             case 'weekly':
             default:
-                return $this->calculateWeeklyTax($beforeTax, $date, $type, $scale);
+                return $this->calculateWeeklyTax($gross, $date, $threshold['type'], $threshold['scale']);
                 break;
             case 'fortnightly':
-                return $this->calculateFortnightlyTax($beforeTax, $date, $type, $scale);
+                return $this->calculateFortnightlyTax($gross, $date, $threshold['type'], $threshold['scale']);
                 break;
             case 'monthly':
-                return $this->calculateMonthlyTax($beforeTax, $date, $type, $scale);
+                return $this->calculateMonthlyTax($gross, $date, $threshold['type'], $threshold['scale']);
                 break;
         }
     }
 
-    protected function calculateWeeklyTax($beforeTax, $date, $type, $scale)
+    /**
+     * Automatically determines the tax threshold as per the source.
+     *
+     * @see \ABWebDevelopers\AusIncomeTax\Source\TaxTableSource::determineThreshold();
+     */
+    protected function determineThreshold(
+        bool $tfnProvided = true,
+        bool $foreignResident = false,
+        bool $taxFreeThreshold = true,
+        ?string $seniorsOffset = null,
+        ?string $medicareLevyExemption = null,
+        bool $helpDebt = false,
+        bool $sfssDebt = false
+    ): array {
+        return $this->source->determineThreshold(
+            $tfnProvided,
+            $foreignResident,
+            $taxFreeThreshold,
+            $seniorsOffset,
+            $medicareLevyExemption,
+            $helpDebt,
+            $sfssDebt
+        );
+    }
+
+    /**
+     * Validates the tax threshold as per the source.
+     *
+     * @see \ABWebDevelopers\AusIncomeTax\Source\TaxTableSource::validateThreshold();
+     */
+    protected function validateThreshold(
+        string $type,
+        string $scale
+    ): bool {
+        return $this->source->validateThreshold($type, $scale);
+    }
+
+    /**
+     * Calculates tax withheld based on a weekly pay cycle.
+     *
+     * @param integer $gross
+     * @param \DateTimeInterface $date
+     * @param string $type
+     * @param string $scale
+     *
+     * @return integer
+     */
+    protected function calculateWeeklyTax(int $gross, \DateTimeInterface $date, string $type, string $scale): int
     {
         if ($scale === '4 resident' || $scale === '4 non resident') {
             // Scale 4 earnings have all cents ignored
-            $earnings = floor($beforeTax);
+            $earnings = floor($gross);
         } else {
             // Round to nearest dollar and add 99 cents
-            $earnings = round($beforeTax, 0, PHP_ROUND_HALF_UP) + 0.99;
+            $earnings = round($gross, 0, PHP_ROUND_HALF_UP) + 0.99;
         }
 
         // Retrieve coefficients
@@ -126,14 +243,24 @@ class IncomeTax
         return $tax;
     }
 
-    protected function calculateFortnightlyTax($beforeTax, $date, $type, $scale)
+    /**
+     * Calculates tax withheld based on a fortnightly pay cycle.
+     *
+     * @param integer $gross
+     * @param \DateTimeInterface $date
+     * @param string $type
+     * @param string $scale
+     *
+     * @return integer
+     */
+    protected function calculateFortnightlyTax(int $gross, \DateTimeInterface $date, string $type, string $scale): int
     {
         if ($scale === '4 resident' || $scale === '4 non resident') {
             // Scale 4 earnings have all cents ignored
-            $earnings = floor($beforeTax / 2);
+            $earnings = floor($gross / 2);
         } else {
             // Divide fortnightly income by two, ignoring cents, then add 99 cents
-            $earnings = floor($beforeTax / 2) + 0.99;
+            $earnings = floor($gross / 2) + 0.99;
         }
 
         // Retrieve coefficients
@@ -171,22 +298,32 @@ class IncomeTax
         return $tax;
     }
 
-    protected function calculateMonthlyTax($beforeTax, $date, $type, $scale)
+    /**
+     * Calculates tax withheld based on a monthly pay cycle.
+     *
+     * @param integer $gross
+     * @param \DateTimeInterface $date
+     * @param string $type
+     * @param string $scale
+     *
+     * @return integer
+     */
+    protected function calculateMonthlyTax(int $gross, \DateTimeInterface $date, string $type, string $scale): int
     {
         // If a monthly payment ends in 33 cents, it needs to be bumped up to 34
-        if ($beforeTax - floor($beforeTax) == 0.33) {
-            $beforeTax += 0.01;
+        if ($gross - floor($gross) == 0.33) {
+            $gross += 0.01;
         }
 
         // Then, we need to multiply this by 3, then divide by 13
-        $beforeTax = ($beforeTax * 3) / 13;
+        $gross = ($gross * 3) / 13;
 
         if ($scale === '4 resident' || $scale === '4 non resident') {
             // Scale 4 earnings have all cents ignored
-            $earnings = floor($beforeTax);
+            $earnings = floor($gross);
         } else {
             // Ignore cents value, add 99 cents
-            $earnings = floor($beforeTax) + 0.99;
+            $earnings = floor($gross) + 0.99;
         }
 
         // Retrieve coefficients
