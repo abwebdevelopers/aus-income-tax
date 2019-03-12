@@ -63,15 +63,38 @@ Once loaded, you can calculate the tax withheld amount of a wage using the follo
 
 ```php
 $tax = $this->IncomeTax->calculateTax(
-    1000,           // The gross wage
-    'weekly',       // The pay cycle - must be either `weekly`, `fortnightly`, `monthly` or `quarterly`
-    '2018-06-02',   // The payment date
-    'standard',     // The type of taxation - either `standard`, `help`, `sfss`, `combo` or `seniors`
-    1               // The taxation scale
+    1000,                         // The gross wage
+    'weekly',                     // The pay cycle - must be either `weekly`, `fortnightly`, `monthly` or `quarterly`
+    new DateTime('2018-06-02'),   // The payment date
+    [
+        'type' => 'standard',     // The type of taxation - either `standard`, `help`, `sfss`, `combo` or `seniors`
+        'scale' => '1'            // The taxation scale
+    ]
 );
 ```
 
 This should return an `integer` value of the amount of tax to be withheld for the gross income.
+
+## Exception codes
+
+### \ABWebDevelopers\AusIncomeTax\Exception\CalculationException
+
+| Code | Message |
+| ---- | ------- |
+| 1000 | Default error code for calculation errors. |
+| 1001 | Gross amount cannot be negative. |
+| 2001 | Invalid threshold type or scale provided. |
+
+### \ABWebDevelopers\AusIncomeTax\Exception\SourceException
+
+| Code | Message |
+| ---- | ------- |
+| 2000 | Default error code for source errors. |
+| 2001 | Invalid threshold type or scale provided. |
+| 2002 | Missing or invalid source file provided.  |
+| 2003 | Invalid seniors offset value. |
+| 2004 | Invalid Medicare Levy Exemption value. |
+| 2005 | Malformed source file provided. |
 
 ## Disclaimer
 
