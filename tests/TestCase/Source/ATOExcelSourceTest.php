@@ -3,6 +3,7 @@ namespace ABWebDevelopers\AusIncomeTax\Tests\TestCase;
 
 use PHPUnit\Framework\TestCase;
 use ABWebDevelopers\AusIncomeTax\Source\ATOExcelSource;
+use ABWebDevelopers\AusIncomeTax\Exception\SourceException;
 
 class ATOExcelSourceTest extends TestCase
 {
@@ -34,7 +35,7 @@ class ATOExcelSourceTest extends TestCase
 
     public function testMissingSource()
     {
-        $this->expectException(\ABWebDevelopers\AusIncomeTax\Exception\SourceException::class);
+        $this->expectException(SourceException::class);
         $this->expectExceptionCode(31250);
 
         $this->ATOExcelSource->loadStandardFile($this->sourceDirectory . 'MISSING_FILE.xlsx');
@@ -42,7 +43,7 @@ class ATOExcelSourceTest extends TestCase
 
     public function testInvalidSource()
     {
-        $this->expectException(\ABWebDevelopers\AusIncomeTax\Exception\SourceException::class);
+        $this->expectException(SourceException::class);
         $this->expectExceptionCode(31251);
 
         $this->ATOExcelSource->loadStandardFile($this->sourceDirectory . 'NAT_INVALID.txt');
@@ -50,7 +51,7 @@ class ATOExcelSourceTest extends TestCase
 
     public function testInvalidSourceRows()
     {
-        $this->expectException(\ABWebDevelopers\AusIncomeTax\Exception\SourceException::class);
+        $this->expectException(SourceException::class);
         $this->expectExceptionCode(31200);
 
         $this->ATOExcelSource->loadStandardFile($this->sourceDirectory . 'NAT_INVALID.xlsx');
@@ -58,11 +59,11 @@ class ATOExcelSourceTest extends TestCase
 
     public function testCoefficientsArrayParameter()
     {
-        $coefficients = $this->ATOExcelSource->coefficients([
-            'amountBeforeTax' => 1000,
-            'type' => 'standard',
-            'scale' => 1
-        ]);
+        $coefficients = $this->ATOExcelSource->coefficients(
+            1000,
+            'standard',
+            '1'
+        );
 
         $this->assertEquals([
             'percentage' => 0.3450,
@@ -70,189 +71,239 @@ class ATOExcelSourceTest extends TestCase
         ], $coefficients);
     }
 
-    public function testCoefficientsInvalidTypeAndScale()
+    public function testCoefficientsInvalidType()
     {
-        $this->assertFalse($this->ATOExcelSource->coefficients([
-            'amountBeforeTax' => 1000,
-            'type' => 'not-exist',
-            'scale' => 1
-        ]));
-        $this->assertFalse($this->ATOExcelSource->coefficients([
-            'amountBeforeTax' => 1000,
-            'type' => 'standard',
-            'scale' => 9
-        ]));
+        $this->expectException(SourceException::class);
+        $this->expectExceptionCode(2001);
+
+        $this->ATOExcelSource->coefficients(
+            1000,
+            'not-exist',
+            '1'
+        );
+    }
+
+    public function testCoefficientsInvalidScale()
+    {
+        $this->expectException(SourceException::class);
+        $this->expectExceptionCode(2001);
+
+        $this->ATOExcelSource->coefficients(
+            1000,
+            'standard',
+            '9'
+        );
     }
 
     public function testNoTFN()
     {
-        $scale = $this->ATOExcelSource->determineScale([
-            'tfnProvided' => false
-        ]);
+        $threshold = $this->ATOExcelSource->determineThreshold(
+            false
+        );
 
-        $this->assertEquals('standard', $scale['type']);
-        $this->assertEquals('4 resident', $scale['scale']);
+        $this->assertEquals('standard', $threshold['type']);
+        $this->assertEquals('4 resident', $threshold['scale']);
 
-        $scale = $this->ATOExcelSource->determineScale([
-            'foreignResident' => true,
-            'tfnProvided' => false
-        ]);
+        $threshold = $this->ATOExcelSource->determineThreshold(
+            false,
+            true
+        );
 
-        $this->assertEquals('standard', $scale['type']);
-        $this->assertEquals('4 non resident', $scale['scale']);
+        $this->assertEquals('standard', $threshold['type']);
+        $this->assertEquals('4 non resident', $threshold['scale']);
     }
 
     public function testTaxFreeThreshold()
     {
-        $scale = $this->ATOExcelSource->determineScale([
-            'tfnProvided' => true
-        ]);
+        $threshold = $this->ATOExcelSource->determineThreshold(
+            true
+        );
 
-        $this->assertEquals('standard', $scale['type']);
-        $this->assertEquals('2', $scale['scale']);
+        $this->assertEquals('standard', $threshold['type']);
+        $this->assertEquals('2', $threshold['scale']);
 
         // Foreign residents cannot claim the tax free threshold
-        $scale = $this->ATOExcelSource->determineScale([
-            'foreignResident' => true,
-            'tfnProvided' => true
-        ]);
+        $threshold = $this->ATOExcelSource->determineThreshold(
+            true,
+            true
+        );
 
-        $this->assertEquals('standard', $scale['type']);
-        $this->assertEquals('3', $scale['scale']);
+        $this->assertEquals('standard', $threshold['type']);
+        $this->assertEquals('3', $threshold['scale']);
     }
 
     public function testNoTaxFreeThreshold()
     {
-        $scale = $this->ATOExcelSource->determineScale([
-            'tfnProvided' => true,
-            'taxFreeThreshold' => false
-        ]);
+        $threshold = $this->ATOExcelSource->determineThreshold(
+            true,
+            false,
+            false
+        );
 
-        $this->assertEquals('standard', $scale['type']);
-        $this->assertEquals('1', $scale['scale']);
+        $this->assertEquals('standard', $threshold['type']);
+        $this->assertEquals('1', $threshold['scale']);
 
-        $scale = $this->ATOExcelSource->determineScale([
-            'foreignResident' => true,
-            'tfnProvided' => true,
-            'taxFreeThreshold' => false
-        ]);
+        $threshold = $this->ATOExcelSource->determineThreshold(
+            true,
+            true,
+            false
+        );
 
-        $this->assertEquals('standard', $scale['type']);
-        $this->assertEquals('3', $scale['scale']);
+        $this->assertEquals('standard', $threshold['type']);
+        $this->assertEquals('3', $threshold['scale']);
     }
 
     public function testDebts()
     {
-        $scale = $this->ATOExcelSource->determineScale([
-            'tfnProvided' => true,
-            'helpDebt' => true
-        ]);
+        $threshold = $this->ATOExcelSource->determineThreshold(
+            true,
+            false,
+            true,
+            null,
+            null,
+            true
+        );
 
-        $this->assertEquals('help', $scale['type']);
-        $this->assertEquals('2', $scale['scale']);
+        $this->assertEquals('help', $threshold['type']);
+        $this->assertEquals('2', $threshold['scale']);
 
-        $scale = $this->ATOExcelSource->determineScale([
-            'tfnProvided' => true,
-            'sfssDebt' => true
-        ]);
+        $threshold = $this->ATOExcelSource->determineThreshold(
+            true,
+            false,
+            true,
+            null,
+            null,
+            false,
+            true
+        );
 
-        $this->assertEquals('sfss', $scale['type']);
-        $this->assertEquals('2', $scale['scale']);
+        $this->assertEquals('sfss', $threshold['type']);
+        $this->assertEquals('2', $threshold['scale']);
 
-        $scale = $this->ATOExcelSource->determineScale([
-            'tfnProvided' => true,
-            'helpDebt' => true,
-            'sfssDebt' => true
-        ]);
+        $threshold = $this->ATOExcelSource->determineThreshold(
+            true,
+            false,
+            true,
+            null,
+            null,
+            true,
+            true
+        );
 
-        $this->assertEquals('combo', $scale['type']);
-        $this->assertEquals('2', $scale['scale']);
+        $this->assertEquals('combo', $threshold['type']);
+        $this->assertEquals('2', $threshold['scale']);
 
-        $scale = $this->ATOExcelSource->determineScale([
-            'foreignResident' => true,
-            'tfnProvided' => true,
-            'helpDebt' => true,
-            'sfssDebt' => true
-        ]);
+        $threshold = $this->ATOExcelSource->determineThreshold(
+            true,
+            true,
+            true,
+            null,
+            null,
+            true,
+            true
+        );
 
-        $this->assertEquals('combo', $scale['type']);
-        $this->assertEquals('3', $scale['scale']);
+        $this->assertEquals('combo', $threshold['type']);
+        $this->assertEquals('3', $threshold['scale']);
 
         // Seniors with HELP and SFSS debt still get charged seniors tax rate
-        $scale = $this->ATOExcelSource->determineScale([
-            'foreignResident' => true,
-            'tfnProvided' => true,
-            'helpDebt' => true,
-            'sfssDebt' => true,
-            'seniorsOffset' => 'single'
-        ]);
+        $threshold = $this->ATOExcelSource->determineThreshold(
+            true,
+            true,
+            true,
+            'single',
+            null,
+            true,
+            true
+        );
 
-        $this->assertEquals('seniors', $scale['type']);
-        $this->assertEquals('single', $scale['scale']);
+        $this->assertEquals('seniors', $threshold['type']);
+        $this->assertEquals('single', $threshold['scale']);
     }
 
     public function testSeniors()
     {
-        $scale = $this->ATOExcelSource->determineScale([
-            'seniorsOffset' => 'single'
-        ]);
+        $threshold = $this->ATOExcelSource->determineThreshold(
+            true,
+            false,
+            true,
+            'single'
+        );
 
-        $this->assertEquals('seniors', $scale['type']);
-        $this->assertEquals('single', $scale['scale']);
+        $this->assertEquals('seniors', $threshold['type']);
+        $this->assertEquals('single', $threshold['scale']);
 
-        $scale = $this->ATOExcelSource->determineScale([
-            'seniorsOffset' => 'illness-separated'
-        ]);
+        $threshold = $this->ATOExcelSource->determineThreshold(
+            true,
+            false,
+            true,
+            'illness-separated'
+        );
 
-        $this->assertEquals('seniors', $scale['type']);
-        $this->assertEquals('illness-separated', $scale['scale']);
+        $this->assertEquals('seniors', $threshold['type']);
+        $this->assertEquals('illness-separated', $threshold['scale']);
 
-        $scale = $this->ATOExcelSource->determineScale([
-            'seniorsOffset' => 'couple'
-        ]);
+        $threshold = $this->ATOExcelSource->determineThreshold(
+            true,
+            false,
+            true,
+            'couple'
+        );
 
-        $this->assertEquals('seniors', $scale['type']);
-        $this->assertEquals('member of a couple', $scale['scale']);
+        $this->assertEquals('seniors', $threshold['type']);
+        $this->assertEquals('member of a couple', $threshold['scale']);
 
-        $scale = $this->ATOExcelSource->determineScale([
-            'tfnProvided' => false,
-            'seniorsOffset' => 'illness-separated'
-        ]);
+        // A senior who has not provided their TFN will be taxed at the no-TFN rate
+        $threshold = $this->ATOExcelSource->determineThreshold(
+            false,
+            false,
+            true,
+            'illness-separated'
+        );
 
-        $this->assertEquals('standard', $scale['type']);
-        $this->assertEquals('4 resident', $scale['scale']);
+        $this->assertEquals('standard', $threshold['type']);
+        $this->assertEquals('4 resident', $threshold['scale']);
     }
 
     public function testMedicareLevy()
     {
-        $scale = $this->ATOExcelSource->determineScale([
-            'tfnProvided' => true,
-            'helpDebt' => true,
-            'medicareLevyExemption' => 'full'
-        ]);
+        $threshold = $this->ATOExcelSource->determineThreshold(
+            true,
+            false,
+            true,
+            null,
+            'full',
+            true,
+            false
+        );
 
-        $this->assertEquals('help', $scale['type']);
-        $this->assertEquals('5', $scale['scale']);
+        $this->assertEquals('help', $threshold['type']);
+        $this->assertEquals('5', $threshold['scale']);
 
-        $scale = $this->ATOExcelSource->determineScale([
-            'tfnProvided' => true,
-            'helpDebt' => true,
-            'sfssDebt' => true,
-            'medicareLevyExemption' => 'half'
-        ]);
+        $threshold = $this->ATOExcelSource->determineThreshold(
+            true,
+            false,
+            true,
+            null,
+            'half',
+            true,
+            true
+        );
 
-        $this->assertEquals('combo', $scale['type']);
-        $this->assertEquals('6', $scale['scale']);
+        $this->assertEquals('combo', $threshold['type']);
+        $this->assertEquals('6', $threshold['scale']);
 
-        $scale = $this->ATOExcelSource->determineScale([
-            'foreignResident' => true,
-            'tfnProvided' => true,
-            'helpDebt' => true,
-            'sfssDebt' => true,
-            'medicareLevyExemption' => 'half'
-        ]);
+        $threshold = $this->ATOExcelSource->determineThreshold(
+            true,
+            true,
+            true,
+            null,
+            'half',
+            true,
+            true
+        );
 
-        $this->assertEquals('combo', $scale['type']);
-        $this->assertEquals('6', $scale['scale']);
+        $this->assertEquals('combo', $threshold['type']);
+        $this->assertEquals('6', $threshold['scale']);
     }
 }

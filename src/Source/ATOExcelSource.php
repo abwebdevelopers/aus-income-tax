@@ -106,14 +106,9 @@ class ATOExcelSource implements TaxTableSource
         string $type = 'standard',
         string $scale = '2'
     ): array {
-        // Make sure tax table type is available
-        if (!isset($this->{$type . 'Matrix'})) {
-            return false;
-        }
-
         // Make sure scale is available and is an array
-        if (!isset($this->{$type . 'Matrix'}[$scale]) || !is_array($this->{$type . 'Matrix'}[$scale])) {
-            return false;
+        if (!$this->validateThreshold($type, $scale)) {
+            throw new SourceException('Invalid threshold type or scale provided', 2001);
         }
 
         // Find correct coefficients
