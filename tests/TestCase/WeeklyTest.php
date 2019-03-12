@@ -83,7 +83,10 @@ class WeeklyTest extends TestCase
         ];
 
         foreach ($data as $earnings => $expectedTax) {
-            $tax = $this->IncomeTax->calculateTax($earnings, 'weekly', '2018-06-02', 'standard', 1);
+            $tax = $this->IncomeTax->calculateTax($earnings, 'weekly', new \DateTime('2018-06-02'), [
+                'type' => 'standard',
+                'scale' => 1
+            ]);
             $this->assertEquals($expectedTax, $tax, 'Scale 1 - Weekly Earnings: ' . $earnings);
         }
     }
@@ -146,7 +149,10 @@ class WeeklyTest extends TestCase
         ];
 
         foreach ($data as $earnings => $expectedTax) {
-            $tax = $this->IncomeTax->calculateTax($earnings, 'weekly', '2018-06-02', 'standard', 2);
+            $tax = $this->IncomeTax->calculateTax($earnings, 'weekly', new \DateTime('2018-06-02'), [
+                'type' => 'standard',
+                'scale' => 2
+            ]);
             $this->assertEquals($expectedTax, $tax, 'Scale 2 - Weekly Earnings: ' . $earnings);
         }
     }
@@ -209,7 +215,10 @@ class WeeklyTest extends TestCase
         ];
 
         foreach ($data as $earnings => $expectedTax) {
-            $tax = $this->IncomeTax->calculateTax($earnings, 'weekly', '2018-06-02', 'standard', 3);
+            $tax = $this->IncomeTax->calculateTax($earnings, 'weekly', new \DateTime('2018-06-02'), [
+                'type' => 'standard',
+                'scale' => 3
+            ]);
             $this->assertEquals($expectedTax, $tax, 'Scale 3 - Weekly Earnings: ' . $earnings);
         }
     }
@@ -237,7 +246,10 @@ class WeeklyTest extends TestCase
         ];
 
         foreach ($data as $earnings => $expectedTax) {
-            $tax = $this->IncomeTax->calculateTax($earnings, 'weekly', '2018-06-02', 'standard', '4 resident');
+            $tax = $this->IncomeTax->calculateTax($earnings, 'weekly', new \DateTime('2018-06-02'), [
+                'type' => 'standard',
+                'scale' => '4 resident'
+            ]);
             $this->assertEquals($expectedTax, $tax, 'Scale 4 - Weekly Earnings: ' . $earnings);
         }
     }
@@ -300,7 +312,10 @@ class WeeklyTest extends TestCase
         ];
 
         foreach ($data as $earnings => $expectedTax) {
-            $tax = $this->IncomeTax->calculateTax($earnings, 'weekly', '2018-06-02', 'standard', 5);
+            $tax = $this->IncomeTax->calculateTax($earnings, 'weekly', new \DateTime('2018-06-02'), [
+                'type' => 'standard',
+                'scale' => 5
+            ]);
             $this->assertEquals($expectedTax, $tax, 'Scale 5 - Weekly Earnings: ' . $earnings);
         }
     }
@@ -363,7 +378,10 @@ class WeeklyTest extends TestCase
         ];
 
         foreach ($data as $earnings => $expectedTax) {
-            $tax = $this->IncomeTax->calculateTax($earnings, 'weekly', '2018-06-02', 'standard', 6);
+            $tax = $this->IncomeTax->calculateTax($earnings, 'weekly', new \DateTime('2018-06-02'), [
+                'type' => 'standard',
+                'scale' => 6
+            ]);
             $this->assertEquals($expectedTax, $tax, 'Scale 6 - Weekly Earnings: ' . $earnings);
         }
     }
