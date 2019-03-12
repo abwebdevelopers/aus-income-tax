@@ -1,6 +1,7 @@
 # Australian Income Tax Calculator
 
 [<img src="https://api.travis-ci.org/ABWebDevelopers/aus-income-tax.svg?branch=master" alt="Build Status">](https://travis-ci.org/ABWebDevelopers/aus-income-tax)
+[![codecov](https://codecov.io/gh/ABWebDevelopers/aus-income-tax/branch/master/graph/badge.svg)](https://codecov.io/gh/ABWebDevelopers/aus-income-tax)
 
 Calculates withheld amounts from gross income as per the Australian Tax Office PAYG (pay-as-you-go) tax tables (currently on the 2018-2019 financial year).
 
