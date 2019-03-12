@@ -36,7 +36,7 @@ class ATOExcelSourceTest extends TestCase
     public function testMissingSource()
     {
         $this->expectException(SourceException::class);
-        $this->expectExceptionCode(31250);
+        $this->expectExceptionCode(2002);
 
         $this->ATOExcelSource->loadStandardFile($this->sourceDirectory . 'MISSING_FILE.xlsx');
     }
@@ -44,7 +44,7 @@ class ATOExcelSourceTest extends TestCase
     public function testInvalidSource()
     {
         $this->expectException(SourceException::class);
-        $this->expectExceptionCode(31251);
+        $this->expectExceptionCode(2002);
 
         $this->ATOExcelSource->loadStandardFile($this->sourceDirectory . 'NAT_INVALID.txt');
     }
@@ -52,7 +52,7 @@ class ATOExcelSourceTest extends TestCase
     public function testInvalidSourceRows()
     {
         $this->expectException(SourceException::class);
-        $this->expectExceptionCode(31200);
+        $this->expectExceptionCode(2005);
 
         $this->ATOExcelSource->loadStandardFile($this->sourceDirectory . 'NAT_INVALID.xlsx');
     }

@@ -260,7 +260,7 @@ class ATOExcelSource implements TaxTableSource
     {
         // Check that file exists
         if (!file_exists($file) || !is_file($file)) {
-            throw new SourceException('File &quot;' . $file . '&quot; does not exist.', 31250);
+            throw new SourceException('File &quot;' . $file . '&quot; does not exist.', 2002);
             return false;
         }
 
@@ -269,7 +269,7 @@ class ATOExcelSource implements TaxTableSource
         $mime = $finfo->file($file);
 
         if ($mime !== 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' && $mime !== 'application/octet-stream') {
-            throw new SourceException('File &quot;' . $file . '&quot; is not a valid XLSX file.', 31251);
+            throw new SourceException('File &quot;' . $file . '&quot; is not a valid XLSX file.', 2002);
             return false;
         }
 
@@ -345,25 +345,25 @@ class ATOExcelSource implements TaxTableSource
 
         // Scale must be numeric or a string
         if (empty($scale) || (!is_numeric($scale) && !is_string($scale))) {
-            throw new SourceException('Scale must be numeric value or a string');
+            throw new SourceException('Scale must be numeric value or a string', 2005);
             return false;
         }
 
         // Upper gross limit must be a numeric value
         if (!is_numeric($upperGrossLimit) || (int) $upperGrossLimit < 0) {
-            throw new SourceException('Upper Gross limit must be a positive numeric value');
+            throw new SourceException('Upper Gross limit must be a positive numeric value', 2005);
             return false;
         }
 
         // Multiplier must be a float or a float formatted string
         if (preg_match('/^\s*$/', $multiplier) || (!is_float($multiplier) && (!is_string($multiplier) || (is_string($multiplier) && !preg_match('/^[0-9]+(\.[0-9]+)*$/', $multiplier)))) || (float) $multiplier < 0) {
-            throw new SourceException('Multiplier must be a positive float');
+            throw new SourceException('Multiplier must be a positive float', 2005);
             return false;
         }
 
         // Subtraction must be a float or a float formatted string, but can be empty
         if (!empty($subtraction) && !is_float($subtraction) && (!is_string($subtraction) || (is_string($subtraction) && !preg_match('/^[0-9]+(\.[0-9]+)*$/', $subtraction))) || (float) $subtraction < 0) {
-            throw new SourceException('Subtraction value must be a positive float');
+            throw new SourceException('Subtraction value must be a positive float', 2005);
             return false;
         }
 
