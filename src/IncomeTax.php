@@ -159,7 +159,7 @@ class IncomeTax
      *
      * @see \ABWebDevelopers\AusIncomeTax\Source\TaxTableSource::determineThreshold();
      */
-    protected function determineThreshold(
+    public function determineThreshold(
         bool $tfnProvided = true,
         bool $foreignResident = false,
         bool $taxFreeThreshold = true,
@@ -184,7 +184,7 @@ class IncomeTax
      *
      * @see \ABWebDevelopers\AusIncomeTax\Source\TaxTableSource::validateThreshold();
      */
-    protected function validateThreshold(
+    public function validateThreshold(
         string $type,
         string $scale
     ): bool {
