@@ -101,12 +101,11 @@ class ATOExcelSource implements TaxTableSource
         ]);
     }
 
-    public function coefficients($amountBeforeTax = null, $type = 'standard', $scale = 2)
-    {
-        if (is_array($amountBeforeTax)) {
-            extract($amountBeforeTax);
-        }
-
+    public function coefficients(
+        int $gross,
+        string $type = 'standard',
+        string $scale = '2'
+    ): array {
         // Make sure tax table type is available
         if (!isset($this->{$type . 'Matrix'})) {
             return false;
@@ -127,7 +126,7 @@ class ATOExcelSource implements TaxTableSource
                 continue;
             }
 
-            if ($amountBeforeTax < $bracket) {
+            if ($gross < $bracket) {
                 $percentage = $values[0];
                 $subtraction = (isset($values[1])) ? $values[1] : 0;
                 break;
@@ -146,19 +145,18 @@ class ATOExcelSource implements TaxTableSource
         ];
     }
 
-    public function determineScale(
-        $tfnProvided = true,
-        $foreignResident = false,
-        $taxFreeThreshold = true,
-        $seniorsOffset = false,
-        $medicareLevyExemption = false,
-        $helpDebt = false,
-        $sfssDebt = false
-    ) {
-        if (is_array($tfnProvided)) {
-            extract($tfnProvided);
-        }
-
+    /**
+     * {@inheritDoc}
+     */
+    public function determineThreshold(
+        bool $tfnProvided = true,
+        bool $foreignResident = false,
+        bool $taxFreeThreshold = true,
+        ?string $seniorsOffset = null,
+        ?string $medicareLevyExemption = null,
+        bool $helpDebt = false,
+        bool $sfssDebt = false
+    ): array {
         // If tax file number is not provided, they automatically must use the standard "no TFN" scale
         if ($tfnProvided === false) {
             if ($foreignResident === true) {
@@ -175,7 +173,15 @@ class ATOExcelSource implements TaxTableSource
         }
 
         // If seniors offset is claimed, we must use the seniors offset scales
-        if ($seniorsOffset !== false && in_array($seniorsOffset, $this->validSeniorsOffsetTypes)) {
+        if (isset($seniorsOffset)) {
+            if (!in_array($seniorsOffset, $this->validSeniorsOffsetTypes)) {
+                throw new SourceException(
+                    'Invalid seniors offset value provided, must be one of the following values: ' .
+                    implode(', ', $this->validSeniorsOffsetTypes),
+                    2003
+                );
+            }
+
             switch ($seniorsOffset) {
                 case 'single':
                     return [
@@ -203,7 +209,15 @@ class ATOExcelSource implements TaxTableSource
         $scale = 1;
 
         // If Medicare Levy Exemption is claimed, we will always use either scale 5 (full) or scale 6 (half)
-        if ($medicareLevyExemption !== false && in_array($medicareLevyExemption, $this->validMedicareLevyExemptions)) {
+        if (isset($medicareLevyExemption)) {
+            if (!in_array($medicareLevyExemption, $this->validMedicareLevyExemptions)) {
+                throw new SourceException(
+                    'Invalid Medicare Levy Exemption value provided, must be one of the following values: ' .
+                    implode(', ', $this->validMedicareLevyExemptions),
+                    2004
+                );
+            }
+
             switch ($medicareLevyExemption) {
                 case 'half':
                     $scale = 6;
@@ -213,7 +227,8 @@ class ATOExcelSource implements TaxTableSource
                     break;
             }
         } else {
-            // If Medicare Levy Exemption is not claimed, we need to determine the scale based on claiming the tax free threshold or if a foreign resident
+            // If Medicare Levy Exemption is not claimed, we need to determine the scale based on claiming the tax
+            // free threshold or if a foreign resident
             if ($foreignResident === true) {
                 $scale = 3;
             } elseif ($taxFreeThreshold === true) {
@@ -223,7 +238,8 @@ class ATOExcelSource implements TaxTableSource
             }
         }
 
-        // If the user has accumulated a HELP/TLS debt or is on a SFSS plan (or has both), we need to use the correct type
+        // If the user has accumulated a HELP/TLS debt or is on a SFSS plan (or has both), we need to use the
+        // correct type
         if ($helpDebt === true && $sfssDebt === true) {
             $type = 'combo';
         } elseif ($helpDebt === true) {
@@ -235,6 +251,14 @@ class ATOExcelSource implements TaxTableSource
             'type' => $type,
             'scale' => $scale
         ];
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function validateThreshold(string $type, string $scale): bool
+    {
+        return (isset($this->{$type . 'Matrix'}[$scale]) && is_array($this->{$type . 'Matrix'}[$scale]));
     }
 
     private function isValidFile($file)
