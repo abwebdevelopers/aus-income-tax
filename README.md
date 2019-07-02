@@ -63,13 +63,11 @@ Once loaded, you can calculate the tax withheld amount of a wage using the follo
 
 ```php
 $tax = $this->IncomeTax->calculateTax(
-    1000,                         // The gross wage
-    'weekly',                     // The pay cycle - must be either `weekly`, `fortnightly`, `monthly` or `quarterly`
-    new DateTime('2018-06-02'),   // The payment date
-    [
-        'type' => 'standard',     // The type of taxation - either `standard`, `help`, `sfss`, `combo` or `seniors`
-        'scale' => '1'            // The taxation scale
-    ]
+    1000,           // The gross wage
+    'weekly',       // The pay cycle - must be either `weekly`, `fortnightly`, `monthly` or `quarterly`
+    '2018-06-02',   // The payment date
+    'standard',     // The type of taxation - either `standard`, `help`, `sfss`, `combo` or `seniors`
+     2              // The taxation scale - `1` (tax free threshold not claimed), `2` (tax free threshold claimed), `3` (foreign resident), `4` (no TFN), `5` (full medicare exemption), `5` (half medicare exemption) 
 );
 ```
 
