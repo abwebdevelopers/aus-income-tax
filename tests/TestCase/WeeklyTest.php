@@ -92,7 +92,7 @@ class WeeklyTest extends TestCase
     }
 
     /**
-     * Test Scale 2 withheld amounts - Where Tax Free Threshold is not claimed
+     * Test Scale 2 withheld amounts - Where Tax Free Threshold is claimed
      *
      * Values taken from ATO's "Statement of formulas for calculating amounts to be withheld 2018-19" PDF
      * https://www.ato.gov.au/uploadedFiles/Content/MEI/downloads/Calculating-amounts-to-be-withheld-2018-19.pdf

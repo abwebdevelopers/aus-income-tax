@@ -68,7 +68,7 @@ $tax = $this->IncomeTax->calculateTax(
     new DateTime('2018-06-02'),   // The payment date
     [
         'type' => 'standard',     // The type of taxation - either `standard`, `help`, `sfss`, `combo` or `seniors`
-        'scale' => '1'            // The taxation scale
+        'scale' => '1'            // The taxation scale - `1` (tax free threshold not claimed), `2` (tax free threshold claimed), `3` (foreign resident), `4` (no TFN), `5` (full medicare exemption), `5` (half medicare exemption) 
     ]
 );
 ```
