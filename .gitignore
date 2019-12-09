@@ -1,8 +1,11 @@
 # Composer Files
-/composer.lock
+composer.lock
 
 # Vendor Files
-/vendor
+vendor
+
+# Editor Files
+.vscode
 
 # Other Files
 .phpunit.result.cache
