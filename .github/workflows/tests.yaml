@@ -28,6 +28,21 @@ jobs:
       - name: Lint codebase
         run: ./vendor/bin/parallel-lint --exclude vendor --exclude resources .
       - name: Run unit tests
+        run: ./vendor/bin/phpunit
+  codeCoverage:
+    runs-on: ubuntu-latest
+    name: Code Coverage
+    steps:
+      - name: Checkout changes
+        uses: actions/checkout@v1
+      - name: Install PHP and extensions
+        uses: shivammathur/setup-php@master
+        with:
+          php-version: 7.2
+          extension-csv: mbstring, intl, gd, xml, zip
+      - name: Install Composer dependencies
+        run: composer install --no-interaction --no-progress --no-suggest --no-scripts
+      - name: Run unit tests for code coverage
         run: ./vendor/bin/phpunit --coverage-clover=coverage.xml
       - name: Upload coverage report
         run: bash <(curl -s https://codecov.io/bash)
