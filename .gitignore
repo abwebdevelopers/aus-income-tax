@@ -9,3 +9,4 @@ vendor
 
 # Other Files
 .phpunit.result.cache
+xdebug-filter.php

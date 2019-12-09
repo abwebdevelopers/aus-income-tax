@@ -43,6 +43,8 @@ jobs:
       - name: Install Composer dependencies
         run: composer install --no-interaction --no-progress --no-suggest --no-scripts
       - name: Run unit tests for code coverage
-        run: ./vendor/bin/phpunit --coverage-clover=coverage.xml
+        run: |
+          ./vendor/bin/phpunit --dump-xdebug-filter xdebug-filter.php
+          ./vendor/bin/phpunit --prepend xdebug-filter.php --coverage-clover=coverage.xml
       - name: Upload coverage report
         run: bash <(curl -s https://codecov.io/bash)
