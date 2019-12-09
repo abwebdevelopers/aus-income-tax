@@ -2,7 +2,10 @@
 namespace ABWebDevelopers\AusIncomeTax\Source;
 
 /**
- * Tax Table Source interface design.
+ * Tax Table Source interface
+ *
+ * Represents a source for the ATO PAYG tax table information. Currently, only one source is available:
+ * \ABWebDevelopers\AusIncomeTax\Source\ATOExcelSource
  *
  * @copyright 2019 AB Web Developers
  * @author Ben Thomson <ben@abweb.com.au>
@@ -18,8 +21,8 @@ interface TaxTableSource
      * @param string $scale A taxation scale (ie. tax free threshold applied or not)
      *
      * @return array Returns an array with two values:
-     *               - `percentage`: The percentage of gross income to be withheld as tax
-     *               - `subtraction`: The amount to subtract from the percentage of gross
+     *   - `percentage`: The percentage of gross income to be withheld as tax
+     *   - `subtraction`: The amount to subtract from the percentage of gross
      */
     public function coefficients(
         int $gross,
@@ -40,17 +43,17 @@ interface TaxTableSource
      * @param boolean $foreignResident Is the payee a foreign resident for tax purposes?
      * @param boolean $taxFreeThreshold Does the payee wish to claim the Tax Free Threshold on this payment?
      * @param string|null $seniorsOffset Does the payee wish to claim the Seniors Tax Offset? This should be one of the
-     *                                   following values:
-     *                                   - `single`: Claim the Seniors Tax Offset as a single person.
-     *                                   - `illness-separated`: Claim the Seniors Tax Offset as a spouse that was
-     *                                                          separated from their partner due to illness or being
-     *                                                          interred in a nursing home.
-     *                                   - `couple`: Claim the Seniors Tax Offset as a spouse who still lives with their
-     *                                               partner.
+     *  following values:
+     *   - `single`: Claim the Seniors Tax Offset as a single person.
+     *   - `illness-separated`: Claim the Seniors Tax Offset as a spouse that was
+     *                          separated from their partner due to illness or being
+     *                          interred in a nursing home.
+     *   - `couple`: Claim the Seniors Tax Offset as a spouse who still lives with their
+     *               partner.
      * @param string|null $medicareLevyExemption Does the payee wish to claim a Medicare Levy Exemption? This should be
-     *                                           one of the following values:
-     *                                           - `half`: Claim a half Medicare Levy Exemption.
-     *                                           - `full`: Claim a full Medicare Levy Exemption.
+     *  one of the following values:
+     *   - `half`: Claim a half Medicare Levy Exemption.
+     *   - `full`: Claim a full Medicare Levy Exemption.
      * @param boolean $helpDebt Does the payee currently have a HELP (Higher Education Loan Program) debt?
      * @param boolean $sfssDebt Does the payee currently have a SFSS (Student Financial Suppliment Scheme) debt?
      *
