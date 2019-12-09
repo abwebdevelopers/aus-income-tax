@@ -6,24 +6,72 @@ use ABWebDevelopers\AusIncomeTax\Exception\SourceException;
 use \PhpOffice\PhpSpreadsheet\Reader\Xlsx as XlsxReader;
 use ABWebDevelopers\AusIncomeTax\Source\ReadFilter\ATOExcelReadFilter;
 
+/**
+ * ATO Excel Spreadsheet Source
+ *
+ * This source reads the Excel spreadsheets that are provided by the Australian Tax Office for calculating the withheld
+ * portion of gross income. The following documents are applicable:
+ *
+ * - NAT 1004: Standard formula for working out income tax.
+ * - NAT 3539: Formula for working out income tax for people who claim a HELP (Higher Education Loan Program),
+ *   SFSS (Student Financial Supplement Scheme) or other student assistance debt.
+ * - NAT 4466: Formula for working out income tax for seniors and pensioners.
+ *
+ * For more details on usage, please review the README in the root of this library.
+ *
+ * @copyright 2019 AB Web Developers
+ * @author Ben Thomson <ben@abweb.com.au>
+ * @license MIT
+ */
 class ATOExcelSource implements TaxTableSource
 {
-    protected $validMedicareLevyExemptions = ['half', 'full'];
-    protected $validSeniorsOffsetTypes = ['single', 'illness-separated', 'couple'];
+    /** @var array Valid Medicare Levy exemption types */
+    protected $medicareLevyExemptions = [
+        'half',
+        'full'
+    ];
 
+    /** @var array Valid Seniors Offset types */
+    protected $seniorsOffsetTypes = [
+        'single',
+        'illness-separated',
+        'couple'
+    ];
+
+    /** @var string The name of the worksheet to retrieve standard coefficient data from */
     protected $standardSheet = 'Statement of Formula - CSV';
+
+    /** @var string The name of the worksheet to retrieve HELP/TSL coefficient data from */
     protected $helpSheet = 'HELP or TSL Stat Formula - CSV';
+
+    /** @var string The name of the worksheet to retrieve SFSS coefficient data from */
     protected $sfssSheet = 'SFSS Stat Formula - CSV';
+
+    /** @var string The name of the worksheet to retrieve HELP/TSL/SFSS combination coefficient data from */
     protected $comboSheet = 'Combo Stat Formula - CSV';
+
+    /** @var string The name of the worksheet to retrieve seniors coefficient data from */
     protected $seniorsSheet = 'Statement of Formula - CSV';
 
+    /** @var array Cached standard coefficient data */
     protected $standardMatrix = [];
+    /** @var array Cached HELP/TSL coefficient data */
     protected $helpMatrix = [];
+    /** @var array Cached SFSS coefficient data */
     protected $sfssMatrix = [];
+    /** @var array Cached HELP/TSL/SFSS combination coefficient data */
     protected $comboMatrix = [];
+    /** @var array Cached seniors coefficient data */
     protected $seniorsMatrix = [];
 
-    public function __construct($settings = [])
+    /**
+     * Constructor.
+     *
+     * Allows for the definition of settings to use throughout the loading of the data from the Excel spreadsheets.
+     *
+     * @param array $settings
+     */
+    public function __construct(array $settings = [])
     {
         // Set sheet names
         if (!empty($settings['standardSheet'])) {
@@ -54,24 +102,38 @@ class ATOExcelSource implements TaxTableSource
         }
     }
 
-    public function loadStandardFile($file, $sheet = null)
+    /**
+     * Loads the NAT 1004 Excel spreadsheet
+     *
+     * @param string $file
+     * @param string $sheet
+     * @return self Fluent interface
+     */
+    public function loadStandardFile(string $file, string $sheet = null)
     {
         if ($sheet === null) {
             $sheet = $this->standardSheet;
         }
 
-        return $this->loadCoefficients([
-            'file' => $file,
-            'type' => 'standard',
-            'sheetName' => $sheet
-        ]);
+        $this->loadCoefficients($file, 'standard', $sheet);
+
+        return $this;
     }
 
+    /**
+     * Loads the NAT 3539 Excel spreadsheet
+     *
+     * @param string $file
+     * @param string|null $helpSheet The worksheet that contains the HELP CSV data
+     * @param string|null $sfssSheet The worksheet that contains the SFSS CSV data
+     * @param string|null $comboSheet The worksheet that contains the combo CSV data
+     * @return self Fluent interface
+     */
     public function loadHelpSfssFile(
-        $file,
-        $helpSheet = null,
-        $sfssSheet = null,
-        $comboSheet = null
+        string $file,
+        string $helpSheet = null,
+        string $sfssSheet = null,
+        string $comboSheet = null
     ) {
         if ($helpSheet === null) {
             $helpSheet = $this->helpSheet;
@@ -85,22 +147,32 @@ class ATOExcelSource implements TaxTableSource
 
         $this->loadCoefficients($file, 'help', $helpSheet);
         $this->loadCoefficients($file, 'sfss', $sfssSheet);
-        return $this->loadCoefficients($file, 'combo', $comboSheet);
+        $this->loadCoefficients($file, 'combo', $comboSheet);
+
+        return $this;
     }
 
-    public function loadSeniorsFile($file, $sheet = null)
+    /**
+     * Loads the NAT 4466 Excel spreadsheet
+     *
+     * @param string $file
+     * @param string $sheet
+     * @return self Fluent interface
+     */
+    public function loadSeniorsFile(string $file, string $sheet = null)
     {
         if ($sheet === null) {
             $sheet = $this->standardSheet;
         }
 
-        return $this->loadCoefficients([
-            'file' => $file,
-            'type' => 'seniors',
-            'sheetName' => $sheet
-        ]);
+        $this->loadCoefficients($file, 'seniors', $sheet);
+
+        return $this;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public function coefficients(
         int $gross,
         string $type = 'standard',
@@ -169,10 +241,10 @@ class ATOExcelSource implements TaxTableSource
 
         // If seniors offset is claimed, we must use the seniors offset scales
         if (isset($seniorsOffset)) {
-            if (!in_array($seniorsOffset, $this->validSeniorsOffsetTypes)) {
+            if (!in_array($seniorsOffset, $this->seniorsOffsetTypes)) {
                 throw new SourceException(
                     'Invalid seniors offset value provided, must be one of the following values: ' .
-                    implode(', ', $this->validSeniorsOffsetTypes),
+                    implode(', ', $this->seniorsOffsetTypes),
                     2003
                 );
             }
@@ -205,10 +277,10 @@ class ATOExcelSource implements TaxTableSource
 
         // If Medicare Levy Exemption is claimed, we will always use either scale 5 (full) or scale 6 (half)
         if (isset($medicareLevyExemption)) {
-            if (!in_array($medicareLevyExemption, $this->validMedicareLevyExemptions)) {
+            if (!in_array($medicareLevyExemption, $this->medicareLevyExemptions)) {
                 throw new SourceException(
                     'Invalid Medicare Levy Exemption value provided, must be one of the following values: ' .
-                    implode(', ', $this->validMedicareLevyExemptions),
+                    implode(', ', $this->medicareLevyExemptions),
                     2004
                 );
             }
@@ -256,36 +328,18 @@ class ATOExcelSource implements TaxTableSource
         return (isset($this->{$type . 'Matrix'}[$scale]) && is_array($this->{$type . 'Matrix'}[$scale]));
     }
 
-    private function isValidFile($file)
+    /**
+     * Loads the coefficient data from the Excel spreadsheet.
+     *
+     * @param string $file
+     * @param string $type
+     * @param string $sheetName
+     * @return void
+     */
+    protected function loadCoefficients(string $file, string $type = 'standard', string $sheetName = null): void
     {
-        // Check that file exists
-        if (!file_exists($file) || !is_file($file)) {
-            throw new SourceException('File &quot;' . $file . '&quot; does not exist.', 2002);
-            return false;
-        }
-
-        // Check that the file is an XLSX format file
-        $finfo = new \finfo(FILEINFO_MIME_TYPE);
-        $mime = $finfo->file($file);
-
-        if ($mime !== 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' && $mime !== 'application/octet-stream') {
-            throw new SourceException('File &quot;' . $file . '&quot; is not a valid XLSX file.', 2002);
-            return false;
-        }
-
-        return true;
-    }
-
-    private function loadCoefficients($file, $type = 'standard', $sheetName = null)
-    {
-        if (is_array($file)) {
-            extract($file);
-        }
-
         // Check file
-        if ($this->isValidFile($file) === false) {
-            return false;
-        }
+        $this->checkValidFile($file);
 
         // Erase current values in type
         $this->{$type . 'Matrix'} = [];
@@ -332,41 +386,95 @@ class ATOExcelSource implements TaxTableSource
                 ? [(float) $multiplier]
                 : [(float) $multiplier, (float) $subtraction];
         }
-
-        return true;
     }
 
-    private function checkRow($row)
+    /**
+     * Checks if the file is an Excel spreadsheet.
+     *
+     * @param string $file
+     * @throws SourceException If the file is not a vaild Excel spreadsheet.
+     * @return void
+     */
+    protected function checkValidFile(string $file): void
+    {
+        // Check that file exists
+        if (!file_exists($file) || !is_file($file)) {
+            throw new SourceException('File &quot;' . $file . '&quot; does not exist.', 2002);
+        }
+
+        // Check that the file is an XLSX format file
+        $finfo = new \finfo(FILEINFO_MIME_TYPE);
+        $mime = $finfo->file($file);
+
+        if (
+            $mime !== 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            && $mime !== 'application/octet-stream'
+        ) {
+            throw new SourceException('File &quot;' . $file . '&quot; is not a valid XLSX file.', 2002);
+        }
+    }
+
+    /**
+     * Checks if a row in the spreadsheet looks like valid coefficient data.
+     *
+     * A valid row is defined as 4 colum,s (array items) with the following information:
+     *  0: Integer or string value as the scale
+     *  1: Integer value as an upper gross limit
+     *  2: Multiplier as a float value
+     *  3: Subtraction as an (optional) float value
+     *
+     * @param array $row
+     * @throws SourceException If a value provided in the row does not match the row definition above.
+     * @return void
+     */
+    protected function checkRow(array $row): void
     {
         $scale = $row[0];
         $upperGrossLimit = $row[1];
         $multiplier = $row[2];
         $subtraction = $row[3];
 
-        // Scale must be numeric or a string
-        if (empty($scale) || (!is_numeric($scale) && !is_string($scale))) {
-            throw new SourceException('Scale must be numeric value or a string', 2005);
-            return false;
+        // Regular expressions
+        $intRegex = '/^[0-9]+$/';
+        $floatRegex = '/^[0-9]+(\.[0-9]+)*$/';
+
+        // Scale must be a positive integer or a string
+        if (
+            empty($scale)
+            || (!preg_match($intRegex, $scale) && !is_string($scale))
+            || (preg_match($intRegex, $scale) && (int) $scale < 1)
+        ) {
+            throw new SourceException('Scale must be a positive integer or a string', 2005);
         }
 
-        // Upper gross limit must be a numeric value
-        if (!is_numeric($upperGrossLimit) || (int) $upperGrossLimit < 0) {
-            throw new SourceException('Upper Gross limit must be a positive numeric value', 2005);
-            return false;
+        // Upper gross limit must be an unsigned integer
+        if (
+            !preg_match($intRegex, $upperGrossLimit)
+            || (int) $upperGrossLimit < 0
+        ) {
+            throw new SourceException('Upper gross limit must be an unsigned integer', 2005);
         }
 
-        // Multiplier must be a float or a float formatted string
-        if (preg_match('/^\s*$/', $multiplier) || (!is_float($multiplier) && (!is_string($multiplier) || (is_string($multiplier) && !preg_match('/^[0-9]+(\.[0-9]+)*$/', $multiplier)))) || (float) $multiplier < 0) {
-            throw new SourceException('Multiplier must be a positive float', 2005);
-            return false;
+        // Multiplier must be a float between 0 and 1
+        if (
+            !preg_match($floatRegex, $multiplier)
+            || (
+                (float) $multiplier < 0
+                || (float) $multiplier > 1
+            )
+        ) {
+            throw new SourceException('Multiplier must be a float between 0 and 1', 2005);
         }
 
-        // Subtraction must be a float or a float formatted string, but can be empty
-        if (!empty($subtraction) && !is_float($subtraction) && (!is_string($subtraction) || (is_string($subtraction) && !preg_match('/^[0-9]+(\.[0-9]+)*$/', $subtraction))) || (float) $subtraction < 0) {
-            throw new SourceException('Subtraction value must be a positive float', 2005);
-            return false;
+        // Subtraction must be an unsigned float, but can be empty
+        if (
+            !empty($subtraction)
+            && (
+                !preg_match($floatRegex, $multiplier)
+                || (float) $subtraction < 0
+            )
+        ) {
+            throw new SourceException('Subtraction must be an unsigned float', 2005);
         }
-
-        return true;
     }
 }

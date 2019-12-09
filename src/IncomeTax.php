@@ -62,12 +62,12 @@ class IncomeTax
      * @param integer $gross The gross income to calculate tax for, in dollars (no cents). This should be rounded down.
      * @param string $frequency The payment frequency. Must be a value provided by `$validFrequencies`.
      * @param \DateTimeInterface $date The payment date. Tax can be affected by leap years, so the date must be provided
-     *                                 to check for this instance. If not provided, it will default to today.
+     *  to check for this instance. If not provided, it will default to today.
      * @param array $threshold The tax threshold to apply. The array should contain two values:
-     *                         - `type`: A taxation type (ie. standard, seniors, etc.)
-     *                         - `scale`: A taxation scale (ie. tax free threshold applied or not)
-     *                         Alternatively, you may provide the parameters for `determineScale()` in an array to have
-     *                         the library automatically determine the correct type and scale.
+     *   - `type`: A taxation type (ie. standard, seniors, etc.)
+     *   - `scale`: A taxation scale (ie. tax free threshold applied or not)
+     *  Alternatively, you may provide the parameters for `determineScale()` in an array to have
+     *  the library automatically determine the correct type and scale.
      *
      * @return int The amount to withhold for tax, in dollars (no cents).
      */
@@ -233,9 +233,9 @@ class IncomeTax
         if (intval($date->format('Y')) % 4 === 0) {
             if ($earnings >= 3450) {
                 $tax += 10;
-            } else if ($earnings >= 1525) {
+            } elseif ($earnings >= 1525) {
                 $tax += 4;
-            } else if ($earnings >= 725) {
+            } elseif ($earnings >= 725) {
                 $tax += 3;
             }
         }
@@ -288,9 +288,9 @@ class IncomeTax
         if (intval($date->format('Y')) % 4 === 0) {
             if ($earnings >= 6800) {
                 $tax += 42;
-            } else if ($earnings >= 3050) {
+            } elseif ($earnings >= 3050) {
                 $tax += 17;
-            } else if ($earnings >= 1400) {
+            } elseif ($earnings >= 1400) {
                 $tax += 12;
             }
         }
