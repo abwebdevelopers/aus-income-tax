@@ -32,6 +32,8 @@ jobs:
   codeCoverage:
     runs-on: ubuntu-latest
     name: Code Coverage
+    env:
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
     steps:
       - name: Checkout changes
         uses: actions/checkout@v1
