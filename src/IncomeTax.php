@@ -105,7 +105,7 @@ class IncomeTax
                 'helpDebt',
                 'sfssDebt'
             ];
-            $diff = array_diff($parameters, $threshold);
+            $diff = array_diff($parameters, array_keys($threshold));
 
             if (count($diff)) {
                 throw new CalculationException(
@@ -116,13 +116,13 @@ class IncomeTax
             }
 
             $threshold = $this->determineThreshold(
-                $threshold['tfnProvided'],
-                $threshold['foreignResident'],
-                $threshold['taxFreeThreshold'],
-                $threshold['seniorsOffset'],
-                $threshold['medicareLevyExemption'],
-                $threshold['helpDebt'],
-                $threshold['sfssDebt']
+                (bool) $threshold['tfnProvided'],
+                (bool) $threshold['foreignResident'],
+                (bool) $threshold['taxFreeThreshold'],
+                (string) $threshold['seniorsOffset'],
+                (string) $threshold['medicareLevyExemption'],
+                (bool) $threshold['helpDebt'],
+                (bool) $threshold['sfssDebt']
             );
         }
 
