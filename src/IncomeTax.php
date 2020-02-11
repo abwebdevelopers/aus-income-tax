@@ -2,7 +2,6 @@
 namespace ABWebDevelopers\AusIncomeTax;
 
 use ABWebDevelopers\AusIncomeTax\Source\TaxTableSource;
-use ABWebDevelopers\AusIncomeTax\Exception\SourceException;
 use ABWebDevelopers\AusIncomeTax\Exception\CalculationException;
 
 /**
@@ -78,19 +77,19 @@ class IncomeTax
         array $threshold = null
     ) {
         if (!isset($this->source)) {
-            throw new SourceException('You must specify a Tax Table Source.');
+            throw new CalculationException('No tax table source provided.', 2002);
             return false;
         }
 
         // Check parameters
         if ($gross < 0) {
-            throw new CalculationException('Gross income amount cannot be negative', 2001);
+            throw new CalculationException('Gross income amount cannot be negative', 1001);
         }
         if (!in_array($frequency, $this->validFrequencies)) {
             throw new CalculationException(
                 'Invalid payment frequency specified - must be one of the following value: ' .
                 implode(', ', $this->validFrequencies),
-                2002
+                1002
             );
             return false;
         }

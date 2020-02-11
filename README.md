@@ -67,7 +67,7 @@ $tax = $this->IncomeTax->calculateTax(
     'weekly',       // The pay cycle - must be either `weekly`, `fortnightly`, `monthly` or `quarterly`
     '2018-06-02',   // The payment date
     'standard',     // The type of taxation - either `standard`, `help`, `sfss`, `combo` or `seniors`
-     2              // The taxation scale - `1` (tax free threshold not claimed), `2` (tax free threshold claimed), `3` (foreign resident), `4` (no TFN), `5` (full medicare exemption), `5` (half medicare exemption) 
+     2              // The taxation scale - `1` (tax free threshold not claimed), `2` (tax free threshold claimed), `3` (foreign resident), `4` (no TFN), `5` (full medicare exemption), `5` (half medicare exemption)
 );
 ```
 
@@ -81,7 +81,9 @@ This should return an `integer` value of the amount of tax to be withheld for th
 | ---- | ------- |
 | 1000 | Default error code for calculation errors. |
 | 1001 | Gross amount cannot be negative. |
+| 1002 | Invalid payment frequency specified. |
 | 2001 | Invalid threshold type or scale provided. |
+| 2002 | No tax table source provided. |
 
 ### \ABWebDevelopers\AusIncomeTax\Exception\SourceException
 
